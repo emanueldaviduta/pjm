@@ -1,6 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
+
+var builder = WebApplication.CreateBuilder(args);
+
+
 namespace PJMConsoleApp
 {
     public class SqlDbContext : DbContext
@@ -25,19 +29,11 @@ namespace PJMConsoleApp
             Console.WriteLine("App running...");
             using (var resource = new SqlDbContext())
             {
-                resource.Database.EnsureCreated();
-                resource.Projects.CreateDbCommand();
-                resource.Projects.Add(new Project
-                {
-                    Name = "New Project",
-                    Description = "Project Description",
-                    CreatedAt = DateTime.Now,
-                    UpdatedAt = DateTime.Now,
-                    IsDeleted = false
-                });
-                resource.SaveChanges();
                 // Use the resource here
             }
+
+            
+            
         }
     }
 }

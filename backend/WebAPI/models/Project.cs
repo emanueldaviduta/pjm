@@ -1,4 +1,4 @@
-﻿namespace PJMConsoleApp;
+﻿namespace WebAPI.Models;
 
 public class Project
 {
