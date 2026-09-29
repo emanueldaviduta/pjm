@@ -1,3 +1,14 @@
+
+<div class="text-center">
+    <button pButton (click)="changeDarkMode()">
+        @if(isDark()){
+            <i class="pi pi-sun"></i>
+        }
+        @else{
+            <i class="pi pi-moon"></i>
+        }
+    </button>
+</div>
 <div class="flex justify-center">
     <p-menu [model]="items"></p-menu>
 </div>

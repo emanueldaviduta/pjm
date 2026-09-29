@@ -2,28 +2,38 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
+import { ToastModule } from 'primeng/toast';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../environments/environment.development';
+import { MessageService } from 'primeng/api';
 
 @Component({
-  imports: [ButtonModule, TableModule, DialogModule, FormsModule],
+  imports: [ButtonModule, TableModule, DialogModule, ToastModule, FormsModule],
+  providers: [MessageService],
   selector: 'app-projects',
   styleUrls: ['./projects.less'],
   templateUrl: './projects.html',
 })
 export class Projects implements OnInit {
-  projects!: Project[];
+  // projects!: Project[];
   project: Project = new Project('', '');
   api = inject(HttpClient);
+  private messageService = inject(MessageService);
 
   isLoading = signal(false);
+  projects = signal<Project[]>([]);
 
   ngOnInit(): void {
     this.isLoading.set(false);
-    this.api.get<Project[]>(environment.apiUrl + '/projects').subscribe((projects: Project[]) => {
-      console.log(projects);
-      this.projects = projects;
+    this.api.get<Project[]>(environment.apiUrl + '/projects').subscribe({
+      next: (projects: Project[]) => {
+        this.projects.set(projects);
+      },
+      error: error => {
+        console.error(error);
+        this.messageService.add({severity:'error', summary: 'Error', detail: 'Failed to load projects'});
+      }
     });
   }
 
@@ -36,9 +46,14 @@ export class Projects implements OnInit {
   saveProject() {
     this.isLoading.set(true);
     this.api.post(environment.apiUrl + '/projects', this.project).subscribe((objUpdated: Project) => {
-      this.projects.push(objUpdated);
+      this.projects.update(projects => [...projects, objUpdated]);
       this.project = new Project('', '');
       this.isLoading.set(false);
+      this.messageService.add({severity:'success', summary: 'Success', detail: 'Project saved successfully'});
+    }, error => {
+      console.error(error);
+      this.isLoading.set(false);
+      this.messageService.add({severity:'error', summary: 'Error', detail: 'Failed to save project'});
     });
     this.displayDialog = false;
   }

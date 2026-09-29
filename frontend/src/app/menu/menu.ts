@@ -9,7 +9,16 @@ import { MenuModule } from 'primeng/menu';
 })
 export class Menu {
   items = [
-    { label: 'Home', routerLink: '/home' },
-    { label: 'Projects', routerLink: '/projects' }
+    { label: 'Home', routerLink: '/home', icon: 'pi pi-home' },
+    { label: 'Projects', routerLink: '/projects', icon: 'pi pi-briefcase' }
   ];
+
+  isDark(){
+    return document.documentElement.classList.contains('app-dark');
+  }
+
+  changeDarkMode() {
+    document.documentElement.classList.toggle('app-dark');
+  }
+
 }
