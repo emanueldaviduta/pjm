@@ -2,19 +2,19 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using WebAPI.Models;
 using WebAPI.Data;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class ProjectsController(AppDb context) : ControllerBase
     {
-        private readonly AppDb _context = context;
-
         [HttpGet]
         public ActionResult GetProjects()
         {
-            return Ok(_context.Projects.ToList());
+            return Ok(context.Projects.ToList());
         }
 
         [HttpPost]
@@ -25,8 +25,8 @@ namespace WebAPI.Controllers
             else
                 project.UpdatedAt = DateTime.UtcNow;
 
-            _context.Projects.Add(project);
-            _context.SaveChanges();
+            context.Projects.Add(project);
+            context.SaveChanges();
 
             return Ok(project);
         }
@@ -34,17 +34,17 @@ namespace WebAPI.Controllers
         [HttpDelete("{id}")]
         public ActionResult DeleteProject(int id)
         {
-            var project = _context.Projects.Find(id);
+            var project = context.Projects.Find(id);
             if (project == null)
             {
                 return NotFound();
             }
             project.IsDeleted = true;
             project.UpdatedAt = DateTime.UtcNow;
-            _context.Projects.Update(project);
-            _context.SaveChanges();
+            context.Projects.Update(project);
+            context.SaveChanges();
 
-            return Ok(_context.Projects.ToList());
+            return Ok(context.Projects.ToList());
         }
     }
 }

@@ -10,7 +10,8 @@ import { MenuModule } from 'primeng/menu';
 export class Menu {
   items = [
     { label: 'Home', routerLink: '/home', icon: 'pi pi-home' },
-    { label: 'Projects', routerLink: '/projects', icon: 'pi pi-briefcase' }
+    { label: 'Projects', routerLink: '/projects', icon: 'pi pi-briefcase' },
+    { label: 'Users', routerLink: '/users', icon: 'pi pi-users' }
   ];
 
   isDark(){

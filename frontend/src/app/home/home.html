@@ -1,1 +1,20 @@
-<p>home works!</p>
+<p-toast></p-toast>
+
+<button pButton (click)="displayDialog = true">Login</button>
+
+<p-dialog header="Login" [(visible)]="displayDialog">
+
+    <div class="p-fluid">
+        <div class="p-field">
+            <label for="email">Email</label>
+            <input id="email" type="text" pInputText aria-label='Email' [(ngModel)]="loginForm.email">
+        </div>
+        <div class="p-field">
+            <label for="password">Password</label>
+            <input id="password" type="password" pInputText aria-label='Password' [(ngModel)]="loginForm.password">
+        </div>
+    </div>
+    <ng-template #footer>
+        <button pButton type="button" label="Login" (click)="onLogin()">Login</button>
+    </ng-template>
+</p-dialog>

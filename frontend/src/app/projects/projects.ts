@@ -7,6 +7,7 @@ import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../environments/environment';
 import { MessageService } from 'primeng/api';
+import { Project } from '../_models/project';
 
 @Component({
   imports: [ButtonModule, TableModule, DialogModule, ToastModule, FormsModule],
@@ -59,12 +60,3 @@ export class Projects implements OnInit {
   }
 }
 
-class Project {
-  id?: number;
-  name?: string;
-  description?: string;
-  constructor(name: string, description: string) {
-    this.name = name;
-    this.description = description;
-  }
-}
