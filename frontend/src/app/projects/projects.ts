@@ -5,7 +5,7 @@ import { DialogModule } from 'primeng/dialog';
 import { ToastModule } from 'primeng/toast';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { environment } from '../../environments/environment.development';
+import { environment } from '../../environments/environment';
 import { MessageService } from 'primeng/api';
 
 @Component({
