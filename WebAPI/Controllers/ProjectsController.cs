@@ -12,15 +12,17 @@ namespace WebAPI.Controllers
     public class ProjectsController(AppDb context) : ControllerBase
     {
         [HttpGet]
-        public ActionResult GetProjects()
+        public async Task<ActionResult> GetProjects()
         {
-            return Ok(context.Projects.ToList());
+            return await Task.FromResult(Ok(context.Projects.ToList()));
         }
 
         [HttpPost]
-        public ActionResult CreateProject(Project project)
+        public async Task<ActionResult> CreateProject(Project project)
         {
-            if(project.Id == 0)
+            // Log the project being created or updated
+            Console.WriteLine($"Creating or updating project: {project.Id}");
+            if(project.Id == 0 || project.Id == default)
                 project.CreatedAt = DateTime.UtcNow;
             else
                 project.UpdatedAt = DateTime.UtcNow;
@@ -28,23 +30,23 @@ namespace WebAPI.Controllers
             context.Projects.Add(project);
             context.SaveChanges();
 
-            return Ok(project);
+            return await Task.FromResult(Ok(project));
         }
 
         [HttpDelete("{id}")]
-        public ActionResult DeleteProject(int id)
+        public async Task<ActionResult> DeleteProject(int id)
         {
             var project = context.Projects.Find(id);
             if (project == null)
             {
-                return NotFound();
+                return await Task.FromResult(NotFound());
             }
             project.IsDeleted = true;
             project.UpdatedAt = DateTime.UtcNow;
             context.Projects.Update(project);
             context.SaveChanges();
 
-            return Ok(context.Projects.ToList());
+            return await Task.FromResult(Ok(context.Projects.ToList()));
         }
     }
 }

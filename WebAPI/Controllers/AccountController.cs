@@ -19,17 +19,17 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("login")]
-        public IActionResult Login(LoginDto loginDto)
+        public async Task<IActionResult> Login(LoginDto loginDto)
         {
             var user = context.AppUsers.FirstOrDefault(u => u.Email == loginDto.Email);
             if (user == null)
             {
-                return BadRequest("Invalid username or password.");
+                return await Task.FromResult(BadRequest("Invalid username or password."));
             }
 
             if (!PasswordCheck(user.PasswordHash, user.PasswordSalt, loginDto.Password))
             {
-                return BadRequest("Invalid username or password.");
+                return await Task.FromResult(BadRequest("Invalid username or password."));
             }
 
             var userDto = new UserDto
@@ -37,7 +37,7 @@ namespace WebAPI.Controllers
                 Email = user.Email,
                 Token = tokenService.GenerateToken(user) // Replace with actual token generation logic
             };
-            return Ok(userDto);
+            return await Task.FromResult(Ok(userDto));
         }
 
         private static bool PasswordCheck(byte[] storedHash, byte[] storedSalt, string password)
@@ -55,12 +55,12 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("register")]
-        public IActionResult Register(RegisterDto registerDto)
+        public async Task<IActionResult> Register(RegisterDto registerDto)
         {
             var user = context.AppUsers.FirstOrDefault(u => u.Email == registerDto.Email);
             if (user != null)
             {
-                return BadRequest("User with this email already exists.");
+                return await Task.FromResult(BadRequest("User with this email already exists."));
             }
             
             using var hmac = new HMACSHA512();
@@ -76,7 +76,7 @@ namespace WebAPI.Controllers
             context.AppUsers.Add(user);
             context.SaveChanges();
 
-            return Ok(user);
+            return await Task.FromResult(Ok(user));
         }
     }
 }
