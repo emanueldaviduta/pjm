@@ -1,44 +1,20 @@
 import { Component, inject } from '@angular/core';
-import { environment } from '../../environments/environment';
-import { AuthLogin } from '../_models/login';
-import { MessageService } from 'primeng/api';
-import { OnInit } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
-import { DialogModule } from 'primeng/dialog';
-import { FormsModule } from '@angular/forms';
-import { Login } from '../_models/login';
-import { HttpClient } from '@angular/common/http';
-import { ToastModule } from 'primeng/toast';
+import { AccountService } from '../_services/account.service';
 
 @Component({
-  imports: [ButtonModule, DialogModule, ToastModule, FormsModule],
-  providers: [MessageService],
+  imports: [RouterLink, ButtonModule],
   selector: 'app-home',
   styleUrls: ['./home.less'],
   templateUrl: './home.html',
 })
-export class Home implements OnInit {
-  displayDialog: boolean = false;
-  loginForm: Login = new Login();
-  apiUrl = environment.apiUrl;
-  api = inject(HttpClient);
-  messageToast = inject(MessageService);
+export class Home {
+  protected account = inject(AccountService);
 
-  ngOnInit(): void {
-  }
-
-  onLogin() {
-    this.api.post(this.apiUrl + '/account/login', this.loginForm).subscribe({
-      next: (response) => {
-      console.log('Login successful', response);
-      sessionStorage.setItem('pjmToken', (response as AuthLogin).token);
-      this.messageToast.add({severity:'success', summary: 'Login Successful', detail: 'You have successfully logged in.'});
-      },
-      error: error => {
-        console.error('Login failed', error);
-        this.messageToast.add({severity:'error', summary: 'Login Failed', detail: 'Invalid username or password.'});
-      }
-    });
-  }
-
+  protected readonly steps = [
+    { title: 'Create a project', text: 'Give it a name. Its short key (e.g. WEB) becomes the prefix of every task.' },
+    { title: 'Add tasks fast', text: 'Type a title and press Enter. Add details later, only when you need them.' },
+    { title: 'Track progress', text: 'Move tasks across the board, or switch to the list view to scan everything.' },
+  ];
 }

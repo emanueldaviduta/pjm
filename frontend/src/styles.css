@@ -3,3 +3,249 @@
 @import "tailwindcss-primeui";
 
 @import "primeicons/primeicons.css";
+
+/* Tailwind `dark:` follows the same class PrimeNG uses (see app.config.ts darkModeSelector). */
+@custom-variant dark (&:where(.app-dark, .app-dark *));
+
+/* App tokens, built on PrimeNG Aura variables so they switch with the theme. */
+:root {
+  --app-header-height: 64px;
+  --app-sidebar-width: 240px;
+  --app-bg: var(--p-surface-50);
+  --app-surface: var(--p-content-background);
+  --app-surface-muted: var(--p-surface-100);
+  --app-border: var(--p-content-border-color);
+  --app-font: 'IBM Plex Sans', system-ui, sans-serif;
+  --app-font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+.app-dark {
+  --app-bg: var(--p-surface-950);
+  --app-surface-muted: var(--p-surface-800);
+}
+
+html,
+body {
+  margin: 0;
+}
+
+body {
+  font-family: var(--app-font);
+  background: var(--app-bg);
+  color: var(--p-text-color);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--p-primary-color);
+  outline-offset: 2px;
+}
+
+/* ---------- Page structure shared by every routed page ---------- */
+
+/* A page with an optional right column: <div class="page-layout"><div class="page">…</div><aside class="page-aside">…</aside></div> */
+.page-layout {
+  display: flex;
+  flex-wrap: wrap;
+  min-height: 100%;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
+  padding: 2rem clamp(1rem, 3vw, 2.75rem);
+  box-sizing: border-box;
+}
+
+.page-layout > .page {
+  flex: 999 1 560px;
+}
+
+.page-aside {
+  flex: 1 1 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.75rem 1.25rem;
+  background: var(--app-surface);
+  border-left: 1px solid var(--app-border);
+  box-sizing: border-box;
+}
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 1.875rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.page-subtitle {
+  margin: 0.375rem 0 0;
+  color: var(--p-text-muted-color);
+}
+
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.muted {
+  color: var(--p-text-muted-color);
+}
+
+/* Centered message for empty, loading, error and signed-out states. */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 3rem 1rem;
+  text-align: center;
+  border: 1.5px dashed var(--app-border);
+  border-radius: 14px;
+}
+
+.empty-state > .pi {
+  font-size: 2rem;
+  color: var(--p-text-muted-color);
+}
+
+.empty-state h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.empty-state p {
+  margin: 0;
+  max-width: 28rem;
+  color: var(--p-text-muted-color);
+}
+
+/* ---------- Small shared pieces ---------- */
+
+.key-badge {
+  font-family: var(--app-font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  padding: 0.125rem 0.4rem;
+  border-radius: 6px;
+  background: var(--app-surface-muted);
+  color: var(--p-text-muted-color);
+  white-space: nowrap;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--app-surface-muted);
+  color: var(--p-text-muted-color);
+}
+
+.status-pill::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-pill[data-status='1'] {
+  background: var(--p-blue-50);
+  color: var(--p-blue-700);
+}
+
+.status-pill[data-status='2'] {
+  background: var(--p-highlight-background);
+  color: var(--p-highlight-color);
+}
+
+.status-pill[data-status='3'] {
+  background: var(--p-amber-50);
+  color: var(--p-amber-800);
+}
+
+.app-dark .status-pill[data-status='1'] {
+  background: var(--p-blue-950);
+  color: var(--p-blue-200);
+}
+
+.app-dark .status-pill[data-status='3'] {
+  background: var(--p-amber-950);
+  color: var(--p-amber-200);
+}
+
+/* Priority is shown with an icon and text, never color alone. */
+.priority {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--p-text-muted-color);
+}
+
+.priority[data-priority='2'],
+.priority[data-priority='3'] {
+  color: var(--p-orange-700);
+}
+
+.app-dark .priority[data-priority='2'],
+.app-dark .priority[data-priority='3'] {
+  color: var(--p-orange-300);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.field > label {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.field-help {
+  color: var(--p-text-muted-color);
+}
+
+.field-error {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-weight: 600;
+  color: var(--p-red-600);
+}
+
+.app-dark .field-error {
+  color: var(--p-red-400);
+}
+
+.required {
+  color: var(--p-red-600);
+}

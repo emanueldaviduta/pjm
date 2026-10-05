@@ -1,7 +1,43 @@
-
-.app-container {
+:host {
     display: flex;
-    flex-direction: row;
-    gap: 10px;
-    margin:10px;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.app-body {
+    flex: 1;
+    display: flex;
+    align-items: stretch;
+}
+
+.app-main {
+    flex: 1;
+    min-width: 0;
+
+    &:focus {
+        outline: none;
+    }
+}
+
+.skip-link {
+    position: absolute;
+    left: 1rem;
+    top: -100px;
+    z-index: 100;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    background: var(--p-primary-color);
+    color: var(--p-primary-contrast-color);
+    font-weight: 600;
+    text-decoration: none;
+
+    &:focus {
+        top: 0.75rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .app-body {
+        display: block;
+    }
 }

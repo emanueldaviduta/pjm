@@ -1,0 +1,96 @@
+@let t = task();
+
+<div class="aside-header">
+    <span class="key-badge">{{ projectKey() }}-{{ t.id }}</span>
+    <div class="header-actions">
+        @if (!editing()) {
+            <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" severity="secondary"
+                ariaLabel="Edit task" (onClick)="startEdit()" />
+        }
+        <p-button icon="pi pi-times" [text]="true" [rounded]="true" severity="secondary"
+            ariaLabel="Close task details" (onClick)="closed.emit()" />
+    </div>
+</div>
+
+@if (editing()) {
+    <form class="edit-form" novalidate (ngSubmit)="save()" (keydown.escape)="cancelEdit()">
+        @if (error()) {
+            <p class="form-error" role="alert">
+                <i class="pi pi-exclamation-circle" aria-hidden="true"></i>{{ error() }}
+            </p>
+        }
+        <div class="field">
+            <label for="task-title">Title <span class="required" aria-hidden="true">*</span></label>
+            <input pInputText id="task-title" name="title" required maxlength="200" autocomplete="off"
+                pAutoFocus [autofocus]="true" [ngModel]="title()" (ngModelChange)="title.set($event)"
+                [attr.aria-invalid]="submitted() && titleMissing()" aria-describedby="task-title-error" />
+            @if (submitted() && titleMissing()) {
+                <small id="task-title-error" class="field-error">
+                    <i class="pi pi-exclamation-circle" aria-hidden="true"></i>Give the task a title.
+                </small>
+            }
+        </div>
+        <div class="field-row">
+            <div class="field">
+                <label for="task-status">Status</label>
+                <p-select inputId="task-status" name="status" [options]="statusOptions" optionLabel="label"
+                    optionValue="value" appendTo="body" [fluid]="true" [ngModel]="status()"
+                    (ngModelChange)="status.set($event)" />
+            </div>
+            <div class="field">
+                <label for="task-priority">Priority</label>
+                <p-select inputId="task-priority" name="priority" [options]="priorityOptions" optionLabel="label"
+                    optionValue="value" appendTo="body" [fluid]="true" [ngModel]="priority()"
+                    (ngModelChange)="priority.set($event)" />
+            </div>
+        </div>
+        <div class="field">
+            <label for="task-due">Due date <span class="muted">(optional)</span></label>
+            <p-datepicker inputId="task-due" name="dueDate" dateFormat="M d, yy" appendTo="body" [fluid]="true"
+                [showIcon]="true" [showClear]="true" [showButtonBar]="true" [ngModel]="dueDate()"
+                (ngModelChange)="dueDate.set($event)" />
+        </div>
+        <div class="field">
+            <label for="task-description">Description <span class="muted">(optional)</span></label>
+            <textarea pTextarea id="task-description" name="description" rows="6" maxlength="2000"
+                placeholder="Add details, links or acceptance criteria" [ngModel]="description()"
+                (ngModelChange)="description.set($event)"></textarea>
+        </div>
+        <div class="form-actions">
+            <button pButton type="button" severity="secondary" variant="outlined" (click)="cancelEdit()">
+                <span pButtonLabel>Cancel</span>
+            </button>
+            <button pButton type="submit" [disabled]="isSaving()">
+                <span pButtonLabel>{{ isSaving() ? 'Saving…' : 'Save' }}</span>
+            </button>
+        </div>
+    </form>
+} @else {
+    <h2 class="aside-title">{{ t.title }}</h2>
+    <dl class="details">
+        <dt>Status</dt>
+        <dd><span class="status-pill" [attr.data-status]="t.status">{{ statusLabels[t.status] }}</span></dd>
+        <dt>Priority</dt>
+        <dd>
+            <span class="priority" [attr.data-priority]="t.priority">
+                <i class="pi pi-flag" aria-hidden="true"></i>{{ priorityLabels[t.priority] }}
+            </span>
+        </dd>
+        <dt>Due</dt>
+        <dd>{{ t.dueDate ? (t.dueDate | date: 'mediumDate') : 'No date' }}</dd>
+        <dt>Created</dt>
+        <dd>{{ t.createdAt | date: 'mediumDate' }}</dd>
+        @if (t.updatedAt) {
+            <dt>Updated</dt>
+            <dd>{{ t.updatedAt | date: 'mediumDate' }}</dd>
+        }
+    </dl>
+    <section class="aside-section" aria-labelledby="task-description-title">
+        <h3 id="task-description-title" class="section-title">Description</h3>
+        <p class="muted description">{{ t.description || 'No description yet.' }}</p>
+    </section>
+    <button pButton type="button" variant="outlined" (click)="startEdit()">
+        <i class="pi pi-pencil" pButtonIcon></i>
+        <span pButtonLabel>Edit task</span>
+    </button>
+}

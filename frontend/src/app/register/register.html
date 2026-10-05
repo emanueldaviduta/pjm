@@ -1,0 +1,93 @@
+<div class="page login">
+    <section class="login-card" aria-labelledby="register-title">
+        <div class="login-heading">
+            <span class="brand-mark" aria-hidden="true">PJ</span>
+            <h1 id="register-title" class="page-title">Create your account</h1>
+            <p class="page-subtitle">You'll be signed in right after.</p>
+        </div>
+
+        @if (error()) {
+            <p class="login-error" role="alert">
+                <i class="pi pi-exclamation-circle" aria-hidden="true"></i>{{ error() }}
+            </p>
+        }
+
+        <form class="flex flex-col gap-5" novalidate (ngSubmit)="onSubmit()">
+            <div class="login-row">
+                <div class="field">
+                    <label for="register-first-name">First name</label>
+                    <input pInputText id="register-first-name" name="firstName" autocomplete="given-name" required
+                        maxlength="100" pAutoFocus [autofocus]="true" [ngModel]="firstName()"
+                        (ngModelChange)="firstName.set($event)"
+                        [attr.aria-invalid]="submitted() && firstNameMissing()"
+                        aria-describedby="register-first-name-error" />
+                    @if (submitted() && firstNameMissing()) {
+                        <small id="register-first-name-error" class="field-error">
+                            <i class="pi pi-exclamation-circle" aria-hidden="true"></i>Enter your first name.
+                        </small>
+                    }
+                </div>
+                <div class="field">
+                    <label for="register-last-name">Last name</label>
+                    <input pInputText id="register-last-name" name="lastName" autocomplete="family-name" required
+                        maxlength="100" [ngModel]="lastName()" (ngModelChange)="lastName.set($event)"
+                        [attr.aria-invalid]="submitted() && lastNameMissing()"
+                        aria-describedby="register-last-name-error" />
+                    @if (submitted() && lastNameMissing()) {
+                        <small id="register-last-name-error" class="field-error">
+                            <i class="pi pi-exclamation-circle" aria-hidden="true"></i>Enter your last name.
+                        </small>
+                    }
+                </div>
+            </div>
+            <div class="field">
+                <label for="register-email">Email</label>
+                <input pInputText id="register-email" name="email" type="email" autocomplete="email" required
+                    [ngModel]="email()" (ngModelChange)="email.set($event)"
+                    [attr.aria-invalid]="submitted() && !!emailError()" aria-describedby="register-email-error" />
+                @if (submitted() && emailError()) {
+                    <small id="register-email-error" class="field-error">
+                        <i class="pi pi-exclamation-circle" aria-hidden="true"></i>{{ emailError() }}
+                    </small>
+                }
+            </div>
+            <div class="field">
+                <label for="register-password">Password</label>
+                <input pInputText id="register-password" name="password" type="password" autocomplete="new-password"
+                    required [ngModel]="password()" (ngModelChange)="password.set($event)"
+                    [attr.aria-invalid]="submitted() && passwordTooShort()"
+                    aria-describedby="register-password-help" />
+                <small id="register-password-help"
+                    [class]="submitted() && passwordTooShort() ? 'field-error' : 'field-help'">
+                    @if (submitted() && passwordTooShort()) {
+                        <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+                    }
+                    At least {{ minPasswordLength }} characters.
+                </small>
+            </div>
+            <div class="field">
+                <label for="register-confirm">Confirm password</label>
+                <input pInputText id="register-confirm" name="confirmPassword" type="password"
+                    autocomplete="new-password" required [ngModel]="confirmPassword()"
+                    (ngModelChange)="confirmPassword.set($event)"
+                    [attr.aria-invalid]="submitted() && passwordsDiffer()" aria-describedby="register-confirm-error" />
+                @if (submitted() && passwordsDiffer()) {
+                    <small id="register-confirm-error" class="field-error">
+                        <i class="pi pi-exclamation-circle" aria-hidden="true"></i>Passwords don't match.
+                    </small>
+                }
+            </div>
+            <button pButton type="submit" size="large" [disabled]="isSaving()">
+                @if (isSaving()) {
+                    <i class="pi pi-spin pi-spinner" pButtonIcon></i>
+                }
+                <span pButtonLabel>{{ isSaving() ? 'Creating account…' : 'Create account' }}</span>
+            </button>
+        </form>
+
+        <p class="login-switch">
+            Already have an account?
+            <a routerLink="/login" [queryParams]="{ returnUrl: returnUrl() }">Sign in</a>
+        </p>
+    </section>
+</div>

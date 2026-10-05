@@ -1,0 +1,84 @@
+:host {
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    height: var(--app-header-height);
+    padding: 0 1.25rem;
+    background: var(--app-surface);
+    border-bottom: 1px solid var(--app-border);
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-height: 44px;
+    color: inherit;
+    text-decoration: none;
+}
+
+.brand-mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--p-primary-color);
+    color: var(--p-primary-contrast-color);
+    font-size: 0.8125rem;
+    font-weight: 700;
+}
+
+.brand-name {
+    font-size: 1.125rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.search {
+    flex: 1 1 260px;
+    max-width: 520px;
+    margin-left: clamp(0px, 5vw, 6rem);
+
+    input {
+        width: 100%;
+    }
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: auto;
+}
+
+.menu-toggle {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .header {
+        gap: 0.5rem;
+        padding: 0 0.75rem;
+    }
+
+    .menu-toggle {
+        display: inline-flex;
+    }
+
+    .search {
+        display: none;
+    }
+
+    .new-project [pButtonLabel] {
+        display: none;
+    }
+}

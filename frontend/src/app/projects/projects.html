@@ -1,37 +1,162 @@
-<p-toast></p-toast>
+<p-toast />
 
-<div class="text-right mb-4">
-    <button pButton label="Add Project" icon="pi pi-plus" (click)="addProject()" [disabled]="isLoading()">Add
-        Project</button>
+<div class="page-layout">
+    <div class="page">
+        <header class="page-header">
+            <div>
+                <h1 class="page-title">Projects</h1>
+                <p class="page-subtitle">{{ summary() }}</p>
+            </div>
+            <div class="page-actions">
+                <label for="project-sort" class="sort-label">Sort</label>
+                <p-select inputId="project-sort" [options]="sortOptions" optionLabel="label" optionValue="value"
+                    [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event)" />
+                <button pButton type="button" (click)="openCreate()">
+                    <i class="pi pi-plus" pButtonIcon></i>
+                    <span pButtonLabel>New project</span>
+                </button>
+            </div>
+        </header>
+
+        @if (query()) {
+            <p class="muted search-note" role="status">
+                Results for “{{ query() }}” · <a routerLink="/projects">Clear search</a>
+            </p>
+        }
+
+        @switch (projectService.state()) {
+            @case ('loading') {
+                <p class="muted" role="status">Loading projects…</p>
+            }
+            @case ('unauthorized') {
+                <div class="empty-state">
+                    <i class="pi pi-lock" aria-hidden="true"></i>
+                    <h2>Sign in to see your projects</h2>
+                    <a pButton routerLink="/login" [queryParams]="{ returnUrl: '/projects' }"><span pButtonLabel>Go to sign in</span></a>
+                </div>
+            }
+            @case ('error') {
+                <div class="empty-state">
+                    <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+                    <h2>Projects could not be loaded</h2>
+                    <button pButton type="button" variant="outlined" (click)="projectService.load(true)">
+                        <span pButtonLabel>Try again</span>
+                    </button>
+                </div>
+            }
+            @default {
+                @if (visibleProjects().length) {
+                    <section class="project-grid" aria-label="Project list">
+                        @for (project of visibleProjects(); track project.id) {
+                            <a class="project-card" [routerLink]="['/projects', project.id]">
+                                <div class="card-top">
+                                    <span class="key-badge">{{ projectKey(project.name) }}</span>
+                                    <span class="muted card-date">
+                                        Updated {{ (project.updatedAt ?? project.createdAt) | date: 'mediumDate' }}
+                                    </span>
+                                </div>
+                                <div class="card-body">
+                                    <h2 class="card-title">{{ project.name }}</h2>
+                                    <p class="card-text">{{ project.description }}</p>
+                                </div>
+                                @if (taskService.statsByProject().get(project.id!); as stats) {
+                                    <div class="card-progress">
+                                        <div class="progress-label">
+                                            <span class="muted">{{ stats.done }} of {{ stats.total }} tasks done</span>
+                                            <span>{{ stats.percent }}%</span>
+                                        </div>
+                                        <p-progressbar [value]="stats.percent" [showValue]="false"
+                                            [attr.aria-label]="project.name + ' progress'" />
+                                    </div>
+                                } @else {
+                                    <span class="card-empty">
+                                        No tasks yet — add the first one
+                                        <i class="pi pi-arrow-right" aria-hidden="true"></i>
+                                    </span>
+                                }
+                            </a>
+                        }
+                        @if (!query()) {
+                            <button type="button" class="project-card new-card" (click)="openCreate()">
+                                <i class="pi pi-plus" aria-hidden="true"></i>
+                                New project
+                            </button>
+                        }
+                    </section>
+                } @else if (query()) {
+                    <div class="empty-state">
+                        <i class="pi pi-search" aria-hidden="true"></i>
+                        <h2>No projects match “{{ query() }}”</h2>
+                        <a routerLink="/projects">Clear search</a>
+                    </div>
+                } @else if (projectService.state() === 'ready') {
+                    <div class="empty-state">
+                        <i class="pi pi-folder-open" aria-hidden="true"></i>
+                        <h2>No projects yet</h2>
+                        <p>A project groups related tasks. Create one, then break the work down into tasks.</p>
+                        <button pButton type="button" (click)="openCreate()">
+                            <i class="pi pi-plus" pButtonIcon></i>
+                            <span pButtonLabel>Create your first project</span>
+                        </button>
+                    </div>
+                }
+            }
+        }
+    </div>
+
+    <aside class="page-aside" aria-labelledby="due-title">
+        <h2 id="due-title" class="section-title">Due this week</h2>
+        <ul class="due-list">
+            @for (task of dueSoon(); track task.id) {
+                <li>
+                    <a class="due-item" [routerLink]="['/projects', task.projectId]">
+                        <span class="due-date">{{ task.dueDate | date: 'EEE d' }}</span>
+                        <span class="due-text">
+                            <span class="due-title">{{ task.title }}</span>
+                            <span class="muted due-meta">{{ projectName(task.projectId) }}</span>
+                        </span>
+                    </a>
+                </li>
+            } @empty {
+                <li class="muted">Nothing due in the next 7 days.</li>
+            }
+        </ul>
+    </aside>
 </div>
 
-<p-table [value]="projects()" [tableStyle]="{ 'min-width': '600px' }">
-    <ng-template #header>
-        <tr>
-            <th>Name</th>
-            <th>Description</th>
-        </tr>
-    </ng-template>
-    <ng-template #body let-project>
-        <tr>
-            <td>{{ project.name }}</td>
-            <td>{{ project.description }}</td>
-        </tr>
-    </ng-template>
-</p-table>
-
-<p-dialog header="Add Project" [(visible)]="displayDialog" [modal]="true">
-    <div class="flex flex-col gap-4">
-        <label pLabel="Project Name"></label>
-        <input pInputText type="text" placeholder="Project Name" [(ngModel)]="project.name">
-    </div>
-    <div class="flex flex-col gap-4">
-        <label pLabel="Project Description"></label>
-        <input pInputText type="text" placeholder="Project Description" [(ngModel)]="project.description">
-    </div>
+<p-dialog header="New project" [visible]="displayDialog()" (visibleChange)="displayDialog.set($event)" [modal]="true"
+    [style]="{ width: '34rem' }" [breakpoints]="{ '640px': '95vw' }">
+    <form id="project-form" class="flex flex-col gap-5" novalidate (ngSubmit)="saveProject()">
+        <p class="muted m-0">Only the name is required. You can change everything later.</p>
+        <div class="field">
+            <label for="project-name">Project name <span class="required" aria-hidden="true">*</span></label>
+            <input pInputText id="project-name" name="name" autocomplete="off" required pAutoFocus [autofocus]="true"
+                placeholder="e.g. Website relaunch" [ngModel]="name()" (ngModelChange)="name.set($event)"
+                [attr.aria-invalid]="submitted() && nameMissing()" aria-describedby="project-name-error project-name-help" />
+            @if (submitted() && nameMissing()) {
+                <small id="project-name-error" class="field-error" role="alert">
+                    <i class="pi pi-exclamation-circle" aria-hidden="true"></i>Give the project a name.
+                </small>
+            }
+            <small id="project-name-help" class="field-help">
+                Tasks will be numbered <span class="key-badge">{{ keyPreview() }}-1</span>,
+                <span class="key-badge">{{ keyPreview() }}-2</span>…
+            </small>
+        </div>
+        <div class="field">
+            <label for="project-description">Description <span class="muted">(optional)</span></label>
+            <textarea pTextarea id="project-description" name="description" rows="4" maxlength="500"
+                placeholder="What is this project about? Who is it for?" [ngModel]="description()"
+                (ngModelChange)="description.set($event)"></textarea>
+            <small class="field-help" aria-live="polite">{{ description().length }} / 500</small>
+        </div>
+    </form>
     <ng-template #footer>
-        <button type="button" pButton severity="secondary" variant="outlined"
-            (click)="displayDialog = false">Cancel</button>
-        <button type="button" pButton (click)="saveProject()">Save</button>
+        <button pButton type="button" severity="secondary" variant="outlined" (click)="displayDialog.set(false)">
+            <span pButtonLabel>Cancel</span>
+        </button>
+        <button pButton type="submit" form="project-form" [disabled]="isSaving()">
+            <span pButtonLabel>Create project</span>
+        </button>
     </ng-template>
 </p-dialog>

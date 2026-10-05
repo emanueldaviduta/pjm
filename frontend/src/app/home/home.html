@@ -1,20 +1,32 @@
-<p-toast></p-toast>
-
-<button pButton (click)="displayDialog = true">Login</button>
-
-<p-dialog header="Login" [(visible)]="displayDialog">
-
-    <div class="p-fluid">
-        <div class="p-field">
-            <label for="email">Email</label>
-            <input id="email" type="text" pInputText aria-label='Email' [(ngModel)]="loginForm.email">
+<div class="page home">
+    <section class="hero" aria-labelledby="home-title">
+        <h1 id="home-title" class="page-title hero-title">Start with a project</h1>
+        <p class="page-subtitle hero-text">
+            A project groups related work. Create one, break it down into tasks, then move each task from To do to Done.
+        </p>
+        <div class="page-actions hero-actions">
+            <a pButton size="large" routerLink="/projects" [queryParams]="{ new: 1 }">
+                <i class="pi pi-plus" pButtonIcon></i>
+                <span pButtonLabel>Create a project</span>
+            </a>
+            @if (!account.isSignedIn()) {
+                <a pButton size="large" severity="secondary" variant="outlined" routerLink="/login">
+                    <span pButtonLabel>Sign in</span>
+                </a>
+            }
         </div>
-        <div class="p-field">
-            <label for="password">Password</label>
-            <input id="password" type="password" pInputText aria-label='Password' [(ngModel)]="loginForm.password">
-        </div>
-    </div>
-    <ng-template #footer>
-        <button pButton type="button" label="Login" (click)="onLogin()">Login</button>
-    </ng-template>
-</p-dialog>
+    </section>
+
+    <section class="how" aria-labelledby="how-title">
+        <h2 id="how-title" class="section-title">How PJM works</h2>
+        <ol class="steps">
+            @for (step of steps; track step.title; let i = $index) {
+                <li class="step">
+                    <span class="step-number" aria-hidden="true">{{ i + 1 }}</span>
+                    <h3>{{ step.title }}</h3>
+                    <p>{{ step.text }}</p>
+                </li>
+            }
+        </ol>
+    </section>
+</div>

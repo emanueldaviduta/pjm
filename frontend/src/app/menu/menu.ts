@@ -1,25 +1,30 @@
-import { Component } from '@angular/core';
-import { MenuModule } from 'primeng/menu';
+import { Component, OnInit, computed, inject } from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+import { projectKey } from '../_models/project';
+import { LayoutService } from '../_services/layout.service';
+import { ProjectService } from '../_services/project.service';
 
 @Component({
-  imports: [MenuModule],
+  imports: [RouterLink, RouterLinkActive],
   selector: 'app-menu',
   styleUrls: ['./menu.less'],
   templateUrl: './menu.html',
 })
-export class Menu {
-  items = [
+export class Menu implements OnInit {
+  protected layout = inject(LayoutService);
+  private projectService = inject(ProjectService);
+
+  protected readonly links = [
     { label: 'Home', routerLink: '/home', icon: 'pi pi-home' },
-    { label: 'Projects', routerLink: '/projects', icon: 'pi pi-briefcase' },
-    { label: 'Users', routerLink: '/users', icon: 'pi pi-users' }
+    { label: 'Projects', routerLink: '/projects', icon: 'pi pi-folder' },
+    { label: 'Tasks', routerLink: '/tasks', icon: 'pi pi-check-square' },
+    { label: 'Users', routerLink: '/users', icon: 'pi pi-users' },
   ];
 
-  isDark(){
-    return document.documentElement.classList.contains('app-dark');
-  }
+  protected readonly recentProjects = computed(() => this.projectService.projects().slice(0, 5));
+  protected readonly projectKey = projectKey;
 
-  changeDarkMode() {
-    document.documentElement.classList.toggle('app-dark');
+  ngOnInit(): void {
+    this.projectService.load();
   }
-
 }

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using WebAPI.Models;
 using WebAPI.Data;
 using Microsoft.AspNetCore.Authorization;
@@ -12,13 +13,13 @@ namespace WebAPI.Controllers
     public class ProjectsController(AppDb context) : ControllerBase
     {
         [HttpGet]
-        public ActionResult GetProjects()
+        public async Task<ActionResult> GetProjects()
         {
-            return Ok(context.Projects.ToList());
+            return Ok( await context.Projects.ToListAsync());
         }
 
         [HttpPost]
-        public ActionResult CreateProject(Project project)
+        public async Task<ActionResult> CreateProject(Project project)
         {
             if(project.Id == 0)
                 project.CreatedAt = DateTime.UtcNow;
@@ -26,15 +27,15 @@ namespace WebAPI.Controllers
                 project.UpdatedAt = DateTime.UtcNow;
 
             context.Projects.Add(project);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
 
             return Ok(project);
         }
 
         [HttpDelete("{id}")]
-        public ActionResult DeleteProject(int id)
+        public async Task<ActionResult> DeleteProject(int id)
         {
-            var project = context.Projects.Find(id);
+            var project = await context.Projects.FindAsync(id);
             if (project == null)
             {
                 return NotFound();
@@ -42,9 +43,9 @@ namespace WebAPI.Controllers
             project.IsDeleted = true;
             project.UpdatedAt = DateTime.UtcNow;
             context.Projects.Update(project);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
 
-            return Ok(context.Projects.ToList());
+            return Ok(await context.Projects.ToListAsync());
         }
     }
 }

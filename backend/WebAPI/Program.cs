@@ -13,7 +13,8 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddDbContext<AppDb>(options =>
     // options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+    // options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnectionAWS"))
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddIdentityServices(builder.Configuration); 
@@ -28,6 +29,11 @@ app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod()
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+}
+
+using (var scope = app.Services.CreateScope())
+{
+    scope.ServiceProvider.GetRequiredService<AppDb>().Database.Migrate();
 }
 
 app.UseAuthentication();

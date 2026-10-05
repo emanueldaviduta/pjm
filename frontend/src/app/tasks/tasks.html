@@ -1,0 +1,71 @@
+<div class="page-layout">
+    <div class="page">
+        <header class="page-header">
+            <div>
+                <h1 class="page-title">Tasks</h1>
+                <p class="page-subtitle">Everything across your projects. Open a project to add tasks.</p>
+            </div>
+        </header>
+
+        @switch (taskService.state()) {
+            @case ('unauthorized') {
+                <div class="empty-state">
+                    <i class="pi pi-lock" aria-hidden="true"></i>
+                    <h2>Sign in to see your tasks</h2>
+                    <a pButton routerLink="/login" [queryParams]="{ returnUrl: '/tasks' }"><span pButtonLabel>Go to sign in</span></a>
+                </div>
+            }
+            @case ('error') {
+                <div class="empty-state">
+                    <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+                    <h2>Tasks could not be loaded</h2>
+                    <button pButton type="button" variant="outlined" (click)="taskService.load(true)">
+                        <span pButtonLabel>Try again</span>
+                    </button>
+                </div>
+            }
+            @default {
+                <p-table [value]="taskService.tasks()" [loading]="taskService.state() === 'loading'"
+                    [tableStyle]="{ 'min-width': '720px' }">
+                    <ng-template #header>
+                        <tr>
+                            <th scope="col">Task</th>
+                            <th scope="col">Project</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Priority</th>
+                            <th scope="col">Due</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template #body let-task>
+                        <tr [class.selected-row]="task.id === selectedId()">
+                            <td>
+                                <div class="list-task">
+                                    <span class="key-badge">{{ taskKey(task.projectId, task.id) }}</span>
+                                    <button type="button" class="task-title" [attr.aria-pressed]="task.id === selectedId()"
+                                        (click)="select(task)">{{ task.title }}</button>
+                                </div>
+                            </td>
+                            <td><a [routerLink]="['/projects', task.projectId]">{{ projectName(task.projectId) }}</a></td>
+                            <td><span class="status-pill" [attr.data-status]="task.status">{{ statusLabels[task.status] }}</span></td>
+                            <td>
+                                <span class="priority" [attr.data-priority]="task.priority">
+                                    <i class="pi pi-flag" aria-hidden="true"></i>{{ priorityLabels[task.priority] }}
+                                </span>
+                            </td>
+                            <td class="muted">{{ task.dueDate ? (task.dueDate | date: 'mediumDate') : 'No date' }}</td>
+                        </tr>
+                    </ng-template>
+                    <ng-template #emptymessage>
+                        <tr><td colspan="5" class="muted">No tasks yet. <a routerLink="/projects">Open a project</a> to add some.</td></tr>
+                    </ng-template>
+                </p-table>
+            }
+        }
+    </div>
+
+    @if (selectedTask(); as task) {
+        <aside class="page-aside" aria-label="Task details">
+            <app-task-details [task]="task" [projectKey]="projectKeyOf(task.projectId)" (closed)="selectedId.set(null)" />
+        </aside>
+    }
+</div>

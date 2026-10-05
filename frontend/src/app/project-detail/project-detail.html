@@ -1,0 +1,158 @@
+<p-toast />
+
+<div class="page-layout">
+    <div class="page">
+        <nav aria-label="Breadcrumb" class="breadcrumb">
+            <a routerLink="/projects">Projects</a>
+            <span aria-hidden="true">/</span>
+            <span aria-current="page">{{ project()?.name ?? 'Project' }}</span>
+        </nav>
+
+        @if (project(); as p) {
+            <header class="page-header">
+                <div class="title-block">
+                    <div class="title-row">
+                        <h1 class="page-title">{{ p.name }}</h1>
+                        <span class="key-badge">{{ key() }}</span>
+                    </div>
+                    @if (p.description) {
+                        <p class="page-subtitle">{{ p.description }}</p>
+                    }
+                </div>
+                <div class="progress">
+                    <div class="progress-label">
+                        <span class="muted">{{ progress().done }} of {{ progress().total }} tasks done</span>
+                        <span>{{ progress().percent }}%</span>
+                    </div>
+                    <p-progressbar [value]="progress().percent" [showValue]="false" aria-label="Project progress" />
+                </div>
+            </header>
+
+            <div class="toolbar">
+                <p-selectbutton [options]="viewOptions" optionLabel="label" optionValue="value" [allowEmpty]="false"
+                    [ngModel]="view()" (ngModelChange)="view.set($event)" ariaLabelledBy="view-label">
+                    <ng-template #item let-option>
+                        <i [class]="option.icon" aria-hidden="true"></i>
+                        <span>{{ option.label }}</span>
+                    </ng-template>
+                </p-selectbutton>
+                <span id="view-label" class="sr-only">View</span>
+                <p class="muted hint">Type a title and press <kbd>Enter</kbd> to add, <kbd>Esc</kbd> to close.</p>
+            </div>
+
+            @if (view() === 'board') {
+                <div class="board-scroll">
+                    <div class="board">
+                        @for (column of columns(); track column.status) {
+                            <section class="board-column" [attr.aria-labelledby]="'column-' + column.status">
+                                <h2 class="column-title" [id]="'column-' + column.status">
+                                    <span class="status-pill" [attr.data-status]="column.status">{{ column.label }}</span>
+                                    <span class="muted">{{ column.tasks.length }}</span>
+                                </h2>
+
+                                @for (task of column.tasks; track task.id) {
+                                    <article class="task-card" [class.selected]="task.id === selectedId()">
+                                        <button type="button" class="task-title" (click)="select(task)">{{ task.title }}</button>
+                                        <div class="task-meta">
+                                            <span class="key-badge">{{ key() }}-{{ task.id }}</span>
+                                            <span class="priority" [attr.data-priority]="task.priority">
+                                                <i class="pi pi-flag" aria-hidden="true"></i>{{ priorityLabels[task.priority] }}
+                                            </span>
+                                            @if (task.dueDate) {
+                                                <span><i class="pi pi-calendar" aria-hidden="true"></i> {{ task.dueDate | date: 'MMM d' }}</span>
+                                            }
+                                        </div>
+                                    </article>
+                                }
+
+                                @if (addingTo() === column.status) {
+                                    <div class="quick-add">
+                                        <label class="sr-only" [for]="'quick-add-' + column.status">New task in {{ column.label }}</label>
+                                        <input pInputText [id]="'quick-add-' + column.status" placeholder="Task title"
+                                            autocomplete="off" pAutoFocus [autofocus]="true" [ngModel]="draft()"
+                                            (ngModelChange)="draft.set($event)" (keydown.enter)="addTask(column.status)"
+                                            (keydown.escape)="cancelAdd()" />
+                                        <div class="quick-add-actions">
+                                            <button pButton type="button" size="small" severity="secondary" variant="outlined"
+                                                (click)="cancelAdd()"><span pButtonLabel>Close</span></button>
+                                            <button pButton type="button" size="small" [disabled]="isSaving()"
+                                                (click)="addTask(column.status)"><span pButtonLabel>Add</span></button>
+                                        </div>
+                                    </div>
+                                } @else {
+                                    <button type="button" class="add-task" (click)="startAdd(column.status)">
+                                        <i class="pi pi-plus" aria-hidden="true"></i>Add task
+                                    </button>
+                                }
+                            </section>
+                        }
+                    </div>
+                </div>
+            } @else {
+                <p-table [value]="tasks()" [tableStyle]="{ 'min-width': '640px' }">
+                    <ng-template #header>
+                        <tr>
+                            <th scope="col">Task</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Priority</th>
+                            <th scope="col">Due</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template #body let-task>
+                        <tr>
+                            <td>
+                                <div class="list-task">
+                                    <span class="key-badge">{{ key() }}-{{ task.id }}</span>
+                                    <button type="button" class="task-title" (click)="select(task)">{{ task.title }}</button>
+                                </div>
+                            </td>
+                            <td><span class="status-pill" [attr.data-status]="task.status">{{ statusLabels[task.status] }}</span></td>
+                            <td>
+                                <span class="priority" [attr.data-priority]="task.priority">
+                                    <i class="pi pi-flag" aria-hidden="true"></i>{{ priorityLabels[task.priority] }}
+                                </span>
+                            </td>
+                            <td class="muted">{{ task.dueDate ? (task.dueDate | date: 'mediumDate') : 'No date' }}</td>
+                        </tr>
+                    </ng-template>
+                    <ng-template #emptymessage>
+                        <tr><td colspan="4" class="muted">No tasks yet. Switch to Board and use “Add task”.</td></tr>
+                    </ng-template>
+                </p-table>
+            }
+        } @else if (projectService.state() === 'loading' || projectService.state() === 'idle') {
+            <p class="muted" role="status">Loading project…</p>
+        } @else if (projectService.state() === 'unauthorized') {
+            <div class="empty-state">
+                <i class="pi pi-lock" aria-hidden="true"></i>
+                <h2>Sign in to see this project</h2>
+                <a pButton routerLink="/login" [queryParams]="{ returnUrl: '/projects/' + id() }"><span pButtonLabel>Go to sign in</span></a>
+            </div>
+        } @else {
+            <div class="empty-state">
+                <i class="pi pi-folder-open" aria-hidden="true"></i>
+                <h2>Project not found</h2>
+                <p>It may have been deleted, or the link is wrong.</p>
+                <a routerLink="/projects">Back to projects</a>
+            </div>
+        }
+    </div>
+
+    @if (project(); as p) {
+        <aside class="page-aside" [attr.aria-label]="selectedTask() ? 'Task details' : 'Project details'">
+            @if (selectedTask(); as task) {
+                <app-task-details [task]="task" [projectKey]="key()" (closed)="selectedId.set(null)" />
+            } @else {
+                <h2 class="section-title">About this project</h2>
+                <p class="muted">{{ p.description || 'No description yet.' }}</p>
+                <dl class="details">
+                    <dt>Tasks</dt>
+                    <dd>{{ progress().done }} of {{ progress().total }} done</dd>
+                    <dt>Created</dt>
+                    <dd>{{ p.createdAt | date: 'mediumDate' }}</dd>
+                </dl>
+                <p class="muted hint">Select a task to see its details here.</p>
+            }
+        </aside>
+    }
+</div>

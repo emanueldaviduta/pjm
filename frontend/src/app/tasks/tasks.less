@@ -1,0 +1,48 @@
+.list-task {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+}
+
+.task-title {
+    all: unset;
+    display: block;
+    padding: 0.125rem 0;
+    color: var(--p-text-color);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.4;
+    cursor: pointer;
+
+    &:hover {
+        text-decoration: underline;
+    }
+
+    &:focus-visible {
+        border-radius: 4px;
+        outline: 2px solid var(--p-primary-color);
+        outline-offset: 2px;
+    }
+}
+
+.selected-row > td {
+    background: var(--p-highlight-background);
+}
+
+/* Keep the details panel in view while the table scrolls. */
+.page-aside {
+    position: sticky;
+    top: var(--app-header-height);
+    align-self: flex-start;
+    max-height: calc(100vh - var(--app-header-height));
+    overflow-y: auto;
+}
+
+@media (max-width: 900px) {
+    .page-aside {
+        position: static;
+        max-height: none;
+        border-left: 0;
+        border-top: 1px solid var(--app-border);
+    }
+}

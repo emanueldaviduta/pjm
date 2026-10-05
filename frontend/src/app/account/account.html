@@ -1,0 +1,170 @@
+<p-toast />
+
+<div class="page account">
+    <header class="page-header">
+        <div>
+            <h1 class="page-title">Account</h1>
+            <p class="page-subtitle">Your profile and sign-in details.</p>
+        </div>
+    </header>
+
+    @switch (state()) {
+        @case ('loading') {
+            <p class="muted" role="status">Loading your account…</p>
+        }
+        @case ('unauthorized') {
+            <div class="empty-state">
+                <i class="pi pi-lock" aria-hidden="true"></i>
+                <h2>Sign in to see your account</h2>
+                <a pButton routerLink="/login" [queryParams]="{ returnUrl: '/account' }">
+                    <span pButtonLabel>Go to sign in</span>
+                </a>
+            </div>
+        }
+        @case ('error') {
+            <div class="empty-state">
+                <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+                <h2>Your account could not be loaded</h2>
+                <button pButton type="button" variant="outlined" (click)="load()">
+                    <span pButtonLabel>Try again</span>
+                </button>
+            </div>
+        }
+        @case ('ready') {
+            @if (account(); as acc) {
+                <section class="account-summary" aria-label="Account summary">
+                    <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+                    <div>
+                        <p class="summary-name">{{ acc.firstName }} {{ acc.lastName }}</p>
+                        <p class="muted summary-meta">{{ acc.email }} · Member since {{ acc.createdAt | date: 'mediumDate' }}</p>
+                    </div>
+                </section>
+
+                <section class="account-section" aria-labelledby="profile-title">
+                    <div class="section-intro">
+                        <h2 id="profile-title" class="section-title">Profile</h2>
+                        <p class="muted">How your name appears to other people in PJM.</p>
+                    </div>
+                    <form class="section-form" novalidate (ngSubmit)="saveProfile()">
+                        <div class="form-row">
+                            <div class="field">
+                                <label for="account-first-name">First name</label>
+                                <input pInputText id="account-first-name" name="firstName" autocomplete="given-name"
+                                    maxlength="100" required [ngModel]="firstName()"
+                                    (ngModelChange)="firstName.set($event)"
+                                    [attr.aria-invalid]="profileSubmitted() && firstNameMissing()"
+                                    aria-describedby="account-first-name-error" />
+                                @if (profileSubmitted() && firstNameMissing()) {
+                                    <small id="account-first-name-error" class="field-error">
+                                        <i class="pi pi-exclamation-circle" aria-hidden="true"></i>Enter your first name.
+                                    </small>
+                                }
+                            </div>
+                            <div class="field">
+                                <label for="account-last-name">Last name</label>
+                                <input pInputText id="account-last-name" name="lastName" autocomplete="family-name"
+                                    maxlength="100" required [ngModel]="lastName()"
+                                    (ngModelChange)="lastName.set($event)"
+                                    [attr.aria-invalid]="profileSubmitted() && lastNameMissing()"
+                                    aria-describedby="account-last-name-error" />
+                                @if (profileSubmitted() && lastNameMissing()) {
+                                    <small id="account-last-name-error" class="field-error">
+                                        <i class="pi pi-exclamation-circle" aria-hidden="true"></i>Enter your last name.
+                                    </small>
+                                }
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label for="account-email">Email</label>
+                            <input pInputText id="account-email" name="email" type="email" [value]="acc.email" readonly
+                                aria-describedby="account-email-help" />
+                            <small id="account-email-help" class="field-help">You sign in with this email. It can't be changed.</small>
+                        </div>
+                        <div class="form-actions">
+                            <button pButton type="submit" [disabled]="isSavingProfile() || !profileChanged()">
+                                <span pButtonLabel>{{ isSavingProfile() ? 'Saving…' : 'Save changes' }}</span>
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="account-section" aria-labelledby="password-title">
+                    <div class="section-intro">
+                        <h2 id="password-title" class="section-title">Password</h2>
+                        <p class="muted">You'll stay signed in on this device after changing it.</p>
+                    </div>
+                    <form class="section-form" novalidate (ngSubmit)="changePassword()">
+                        @if (passwordError()) {
+                            <p class="form-error" role="alert">
+                                <i class="pi pi-exclamation-circle" aria-hidden="true"></i>{{ passwordError() }}
+                            </p>
+                        }
+                        <div class="field">
+                            <label for="account-current-password">Current password</label>
+                            <input pInputText id="account-current-password" name="currentPassword" type="password"
+                                autocomplete="current-password" required [ngModel]="currentPassword()"
+                                (ngModelChange)="currentPassword.set($event)"
+                                [attr.aria-invalid]="passwordSubmitted() && currentPasswordMissing()"
+                                aria-describedby="account-current-password-error" />
+                            @if (passwordSubmitted() && currentPasswordMissing()) {
+                                <small id="account-current-password-error" class="field-error">
+                                    <i class="pi pi-exclamation-circle" aria-hidden="true"></i>Enter your current password.
+                                </small>
+                            }
+                        </div>
+                        <div class="form-row">
+                            <div class="field">
+                                <label for="account-new-password">New password</label>
+                                <input pInputText id="account-new-password" name="newPassword" type="password"
+                                    autocomplete="new-password" required [ngModel]="newPassword()"
+                                    (ngModelChange)="newPassword.set($event)"
+                                    [attr.aria-invalid]="passwordSubmitted() && newPasswordTooShort()"
+                                    aria-describedby="account-new-password-help" />
+                                <small id="account-new-password-help"
+                                    [class]="passwordSubmitted() && newPasswordTooShort() ? 'field-error' : 'field-help'">
+                                    @if (passwordSubmitted() && newPasswordTooShort()) {
+                                        <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+                                    }
+                                    At least {{ minPasswordLength }} characters.
+                                </small>
+                            </div>
+                            <div class="field">
+                                <label for="account-confirm-password">Confirm new password</label>
+                                <input pInputText id="account-confirm-password" name="confirmPassword" type="password"
+                                    autocomplete="new-password" required [ngModel]="confirmPassword()"
+                                    (ngModelChange)="confirmPassword.set($event)"
+                                    [attr.aria-invalid]="passwordSubmitted() && passwordsDiffer()"
+                                    aria-describedby="account-confirm-password-error" />
+                                @if (passwordSubmitted() && passwordsDiffer()) {
+                                    <small id="account-confirm-password-error" class="field-error">
+                                        <i class="pi pi-exclamation-circle" aria-hidden="true"></i>Passwords don't match.
+                                    </small>
+                                }
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button pButton type="submit" [disabled]="isSavingPassword()">
+                                <span pButtonLabel>{{ isSavingPassword() ? 'Changing…' : 'Change password' }}</span>
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="account-section" aria-labelledby="session-title">
+                    <div class="section-intro">
+                        <h2 id="session-title" class="section-title">Sign out</h2>
+                        <p class="muted">End your session on this device.</p>
+                    </div>
+                    <div class="section-form">
+                        <div class="form-actions">
+                            <button pButton type="button" severity="secondary" variant="outlined" (click)="signOut()">
+                                <i class="pi pi-sign-out" pButtonIcon></i>
+                                <span pButtonLabel>Sign out</span>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            }
+        }
+    }
+</div>
