@@ -3,8 +3,19 @@
         <header class="page-header">
             <div>
                 <h1 class="page-title">Tasks</h1>
-                <p class="page-subtitle">Everything across your projects. Open a project to add tasks.</p>
+                <p class="page-subtitle">Everything across your projects.</p>
             </div>
+            @if (account.isSignedIn()) {
+                <div class="page-actions">
+                    <label for="task-project-filter" class="filter-label">Project</label>
+                    <p-select inputId="task-project-filter" [options]="filterOptions()" optionLabel="label"
+                        optionValue="value" [ngModel]="projectFilter()" (ngModelChange)="setProjectFilter($event)" />
+                    <button pButton type="button" (click)="openCreate()" [disabled]="!projectOptions().length">
+                        <i class="pi pi-plus" pButtonIcon></i>
+                        <span pButtonLabel>Add new task</span>
+                    </button>
+                </div>
+            }
         </header>
 
         @switch (taskService.state()) {
@@ -25,7 +36,7 @@
                 </div>
             }
             @default {
-                <p-table [value]="taskService.tasks()" [loading]="taskService.state() === 'loading'"
+                <p-table [value]="visibleTasks()" [loading]="taskService.state() === 'loading'"
                     [tableStyle]="{ 'min-width': '720px' }">
                     <ng-template #header>
                         <tr>
@@ -56,7 +67,10 @@
                         </tr>
                     </ng-template>
                     <ng-template #emptymessage>
-                        <tr><td colspan="5" class="muted">No tasks yet. <a routerLink="/projects">Open a project</a> to add some.</td></tr>
+                        <tr><td colspan="5" class="muted">
+                            {{ projectFilter() ? 'No tasks in this project yet.' : 'No tasks yet.' }}
+                            Use “Add new task” to create one.
+                        </td></tr>
                     </ng-template>
                 </p-table>
             }
@@ -69,3 +83,69 @@
         </aside>
     }
 </div>
+
+<p-toast />
+
+<p-dialog header="New task" [visible]="displayDialog()" (visibleChange)="displayDialog.set($event)" [modal]="true"
+    [style]="{ width: '34rem' }" [breakpoints]="{ '640px': '95vw' }">
+    <form id="task-form" class="flex flex-col gap-5" novalidate (ngSubmit)="saveTask()">
+        <div class="field">
+            <label for="new-task-title">Title <span class="required" aria-hidden="true">*</span></label>
+            <input pInputText id="new-task-title" name="title" required maxlength="200" autocomplete="off"
+                pAutoFocus [autofocus]="true" placeholder="e.g. Write release notes" [ngModel]="title()"
+                (ngModelChange)="title.set($event)" [attr.aria-invalid]="submitted() && titleMissing()"
+                aria-describedby="new-task-title-error" />
+            @if (submitted() && titleMissing()) {
+                <small id="new-task-title-error" class="field-error">
+                    <i class="pi pi-exclamation-circle" aria-hidden="true"></i>Give the task a title.
+                </small>
+            }
+        </div>
+        <div class="field">
+            <label for="new-task-project">Project <span class="required" aria-hidden="true">*</span></label>
+            <p-select inputId="new-task-project" name="projectId" [options]="projectOptions()" optionLabel="label"
+                optionValue="value" placeholder="Choose a project" appendTo="body" [fluid]="true"
+                [ngModel]="projectId()" (ngModelChange)="projectId.set($event)"
+                [invalid]="submitted() && projectMissing()" />
+            @if (submitted() && projectMissing()) {
+                <small class="field-error">
+                    <i class="pi pi-exclamation-circle" aria-hidden="true"></i>Choose the project this task belongs to.
+                </small>
+            }
+        </div>
+        <div class="field-row">
+            <div class="field">
+                <label for="new-task-status">Status</label>
+                <p-select inputId="new-task-status" name="status" [options]="statusOptions" optionLabel="label"
+                    optionValue="value" appendTo="body" [fluid]="true" [ngModel]="status()"
+                    (ngModelChange)="status.set($event)" />
+            </div>
+            <div class="field">
+                <label for="new-task-priority">Priority</label>
+                <p-select inputId="new-task-priority" name="priority" [options]="priorityOptions" optionLabel="label"
+                    optionValue="value" appendTo="body" [fluid]="true" [ngModel]="priority()"
+                    (ngModelChange)="priority.set($event)" />
+            </div>
+        </div>
+        <div class="field">
+            <label for="new-task-due">Due date <span class="muted">(optional)</span></label>
+            <p-datepicker inputId="new-task-due" name="dueDate" dateFormat="M d, yy" appendTo="body" [fluid]="true"
+                [showIcon]="true" [showClear]="true" [showButtonBar]="true" [ngModel]="dueDate()"
+                (ngModelChange)="dueDate.set($event)" />
+        </div>
+        <div class="field">
+            <label for="new-task-description">Description <span class="muted">(optional)</span></label>
+            <textarea pTextarea id="new-task-description" name="description" rows="4" maxlength="2000"
+                placeholder="Add details, links or acceptance criteria" [ngModel]="description()"
+                (ngModelChange)="description.set($event)"></textarea>
+        </div>
+    </form>
+    <ng-template #footer>
+        <button pButton type="button" severity="secondary" variant="outlined" (click)="displayDialog.set(false)">
+            <span pButtonLabel>Cancel</span>
+        </button>
+        <button pButton type="submit" form="task-form" [disabled]="isSaving()">
+            <span pButtonLabel>{{ isSaving() ? 'Creating…' : 'Create task' }}</span>
+        </button>
+    </ng-template>
+</p-dialog>

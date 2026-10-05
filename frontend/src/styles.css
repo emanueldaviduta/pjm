@@ -223,6 +223,22 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.375rem;
+  /* Lets a field shrink inside a grid row instead of growing to its input's intrinsic width. */
+  min-width: 0;
+}
+
+/* Two fields side by side, each taking half of the row; stacks on narrow screens. */
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 480px) {
+  .field-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .field > label {

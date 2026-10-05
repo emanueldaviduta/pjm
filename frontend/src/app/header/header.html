@@ -11,20 +11,24 @@
         <span class="brand-name">PJM</span>
     </a>
 
-    <form class="search" role="search" (ngSubmit)="search()">
-        <label for="global-search" class="sr-only">Search projects</label>
-        <p-iconfield>
-            <p-inputicon class="pi pi-search" />
-            <input pInputText id="global-search" name="q" type="search" placeholder="Search projects"
-                autocomplete="off" [(ngModel)]="query" />
-        </p-iconfield>
-    </form>
+    @if (account.isSignedIn()) {
+        <form class="search" role="search" (ngSubmit)="search()">
+            <label for="global-search" class="sr-only">Search projects</label>
+            <p-iconfield>
+                <p-inputicon class="pi pi-search" />
+                <input pInputText id="global-search" name="q" type="search" placeholder="Search projects"
+                    autocomplete="off" [(ngModel)]="query" />
+            </p-iconfield>
+        </form>
+    }
 
     <div class="actions">
-        <a pButton routerLink="/projects" [queryParams]="{ new: 1 }" class="new-project" aria-label="New project">
-            <i class="pi pi-plus" pButtonIcon></i>
-            <span pButtonLabel>New project</span>
-        </a>
+        @if (account.isSignedIn()) {
+            <a pButton routerLink="/projects" [queryParams]="{ new: 1 }" class="new-project" aria-label="New project">
+                <i class="pi pi-plus" pButtonIcon></i>
+                <span pButtonLabel>New project</span>
+            </a>
+        }
         <p-button [icon]="theme.isDark() ? 'pi pi-sun' : 'pi pi-moon'" [text]="true" [rounded]="true"
             severity="secondary" [ariaLabel]="theme.isDark() ? 'Switch to light mode' : 'Switch to dark mode'"
             (onClick)="theme.toggle()" />

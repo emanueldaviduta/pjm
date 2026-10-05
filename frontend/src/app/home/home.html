@@ -5,13 +5,17 @@
             A project groups related work. Create one, break it down into tasks, then move each task from To do to Done.
         </p>
         <div class="page-actions hero-actions">
-            <a pButton size="large" routerLink="/projects" [queryParams]="{ new: 1 }">
-                <i class="pi pi-plus" pButtonIcon></i>
-                <span pButtonLabel>Create a project</span>
-            </a>
-            @if (!account.isSignedIn()) {
-                <a pButton size="large" severity="secondary" variant="outlined" routerLink="/login">
+            @if (account.isSignedIn()) {
+                <a pButton size="large" routerLink="/projects" [queryParams]="{ new: 1 }">
+                    <i class="pi pi-plus" pButtonIcon></i>
+                    <span pButtonLabel>Create a project</span>
+                </a>
+            } @else {
+                <a pButton size="large" routerLink="/login">
                     <span pButtonLabel>Sign in</span>
+                </a>
+                <a pButton size="large" severity="secondary" variant="outlined" routerLink="/register">
+                    <span pButtonLabel>Create account</span>
                 </a>
             }
         </div>

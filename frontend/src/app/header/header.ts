@@ -20,7 +20,7 @@ import { ThemeService } from '../_services/theme.service';
 export class Header {
   protected theme = inject(ThemeService);
   protected layout = inject(LayoutService);
-  private account = inject(AccountService);
+  protected account = inject(AccountService);
   private router = inject(Router);
 
   protected query = '';

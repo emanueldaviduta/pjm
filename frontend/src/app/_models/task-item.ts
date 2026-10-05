@@ -48,3 +48,10 @@ export const BOARD_STATUSES: TaskStatus[] = [
   TaskStatus.OnHold,
   TaskStatus.Completed,
 ];
+
+/** Sends a picked calendar day as "YYYY-MM-DD" so time zones cannot shift it. */
+export function toDateOnly(date: Date | null) {
+  if (!date) return null;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}

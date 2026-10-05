@@ -11,10 +11,12 @@
                 <label for="project-sort" class="sort-label">Sort</label>
                 <p-select inputId="project-sort" [options]="sortOptions" optionLabel="label" optionValue="value"
                     [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event)" />
-                <button pButton type="button" (click)="openCreate()">
-                    <i class="pi pi-plus" pButtonIcon></i>
-                    <span pButtonLabel>New project</span>
-                </button>
+                @if (account.isSignedIn()) {
+                    <button pButton type="button" (click)="openCreate()">
+                        <i class="pi pi-plus" pButtonIcon></i>
+                        <span pButtonLabel>New project</span>
+                    </button>
+                }
             </div>
         </header>
 

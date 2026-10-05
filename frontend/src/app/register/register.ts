@@ -13,7 +13,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 @Component({
   imports: [FormsModule, RouterLink, AutoFocusModule, ButtonModule, InputTextModule],
   selector: 'app-register',
-  styleUrl: '../login/login.less',
+  styleUrls: ['./register.less'],
   templateUrl: './register.html',
 })
 export class Register {

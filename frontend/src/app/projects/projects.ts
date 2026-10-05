@@ -13,6 +13,7 @@ import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
 import { Project, projectKey } from '../_models/project';
 import { TaskStatus } from '../_models/task-item';
+import { AccountService } from '../_services/account.service';
 import { ProjectService } from '../_services/project.service';
 import { TaskService } from '../_services/task.service';
 
@@ -29,6 +30,7 @@ type SortBy = 'updated' | 'name';
   templateUrl: './projects.html',
 })
 export class Projects implements OnInit {
+  protected account = inject(AccountService);
   protected projectService = inject(ProjectService);
   protected taskService = inject(TaskService);
   private messageService = inject(MessageService);
@@ -78,7 +80,8 @@ export class Projects implements OnInit {
     this.route.queryParamMap.subscribe(params => {
       this.query.set(params.get('q') ?? '');
       if (params.has('new')) {
-        this.openCreate();
+        // A bookmarked ?new=1 link should not open the dialog for a signed-out visitor.
+        if (this.account.isSignedIn()) this.openCreate();
         // Drop the flag so closing the dialog and reloading does not reopen it.
         this.router.navigate([], { queryParams: { new: null }, queryParamsHandling: 'merge', replaceUrl: true });
       }

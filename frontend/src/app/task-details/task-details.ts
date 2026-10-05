@@ -8,7 +8,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
 import {
-  BOARD_STATUSES, PRIORITY_LABELS, STATUS_LABELS, TaskItem, TaskPriority, TaskStatus,
+  BOARD_STATUSES, PRIORITY_LABELS, STATUS_LABELS, TaskItem, TaskPriority, TaskStatus, toDateOnly,
 } from '../_models/task-item';
 import { TaskService } from '../_services/task.service';
 
@@ -91,11 +91,4 @@ export class TaskDetails {
       },
     });
   }
-}
-
-/** Sends the picked calendar day as "YYYY-MM-DD" so time zones cannot shift it. */
-function toDateOnly(date: Date | null) {
-  if (!date) return null;
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
