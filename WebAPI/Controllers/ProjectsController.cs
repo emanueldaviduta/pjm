@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using WebAPI.Models;
 using WebAPI.Data;
 using Microsoft.AspNetCore.Authorization;
@@ -14,7 +15,7 @@ namespace WebAPI.Controllers
         [HttpGet]
         public async Task<ActionResult> GetProjects()
         {
-            return await Task.FromResult(Ok(context.Projects.ToList()));
+            return Ok( await context.Projects.ToListAsync());
         }
 
         [HttpPost]
@@ -28,7 +29,7 @@ namespace WebAPI.Controllers
                 project.UpdatedAt = DateTime.UtcNow;
 
             context.Projects.Add(project);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
 
             return await Task.FromResult(Ok(project));
         }
@@ -36,7 +37,7 @@ namespace WebAPI.Controllers
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteProject(int id)
         {
-            var project = context.Projects.Find(id);
+            var project = await context.Projects.FindAsync(id);
             if (project == null)
             {
                 return await Task.FromResult(NotFound());
@@ -44,9 +45,9 @@ namespace WebAPI.Controllers
             project.IsDeleted = true;
             project.UpdatedAt = DateTime.UtcNow;
             context.Projects.Update(project);
-            context.SaveChanges();
+            await context.SaveChangesAsync();
 
-            return await Task.FromResult(Ok(context.Projects.ToList()));
+            return Ok(await context.Projects.ToListAsync());
         }
     }
 }

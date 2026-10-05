@@ -1,14 +1,31 @@
+<nav id="app-sidebar" class="sidebar" [class.open]="layout.menuOpen()" aria-label="Main"
+    (keydown.escape)="layout.closeMenu()">
+    <ul class="nav-list">
+        @for (link of links; track link.routerLink) {
+            <li>
+                <a class="nav-link" [routerLink]="link.routerLink" routerLinkActive="active"
+                    ariaCurrentWhenActive="page" (click)="layout.closeMenu()">
+                    <i [class]="link.icon" aria-hidden="true"></i>
+                    {{ link.label }}
+                </a>
+            </li>
+        }
+    </ul>
 
-<div class="text-center">
-    <button pButton (click)="changeDarkMode()">
-        @if(isDark()){
-            <i class="pi pi-sun"></i>
-        }
-        @else{
-            <i class="pi pi-moon"></i>
-        }
-    </button>
-</div>
-<div class="flex justify-center">
-    <p-menu [model]="items"></p-menu>
-</div>
+    @if (recentProjects().length) {
+        <section aria-labelledby="recent-projects-title">
+            <h2 id="recent-projects-title" class="eyebrow">Recent projects</h2>
+            <ul class="nav-list">
+                @for (project of recentProjects(); track project.id) {
+                    <li>
+                        <a class="nav-link" [routerLink]="['/projects', project.id]" routerLinkActive="active"
+                            ariaCurrentWhenActive="page" (click)="layout.closeMenu()">
+                            <span class="key-badge">{{ projectKey(project.name) }}</span>
+                            <span class="truncate">{{ project.name }}</span>
+                        </a>
+                    </li>
+                }
+            </ul>
+        </section>
+    }
+</nav>

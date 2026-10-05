@@ -1,0 +1,52 @@
+<div class="page login">
+    <section class="login-card" aria-labelledby="login-title">
+        <div class="login-heading">
+            <span class="brand-mark" aria-hidden="true">PJ</span>
+            <h1 id="login-title" class="page-title">Sign in to PJM</h1>
+            <p class="page-subtitle">Use the email and password from your account.</p>
+        </div>
+
+        @if (error()) {
+            <p class="login-error" role="alert">
+                <i class="pi pi-exclamation-circle" aria-hidden="true"></i>{{ error() }}
+            </p>
+        }
+
+        <form class="flex flex-col gap-5" novalidate (ngSubmit)="onSubmit()">
+            <div class="field">
+                <label for="login-email">Email</label>
+                <input pInputText id="login-email" name="email" type="email" autocomplete="email" required
+                    pAutoFocus [autofocus]="true" [ngModel]="email()" (ngModelChange)="email.set($event)"
+                    [attr.aria-invalid]="submitted() && emailMissing()" aria-describedby="login-email-error" />
+                @if (submitted() && emailMissing()) {
+                    <small id="login-email-error" class="field-error">
+                        <i class="pi pi-exclamation-circle" aria-hidden="true"></i>Enter your email.
+                    </small>
+                }
+            </div>
+            <div class="field">
+                <label for="login-password">Password</label>
+                <input pInputText id="login-password" name="password" type="password"
+                    autocomplete="current-password" required [ngModel]="password()"
+                    (ngModelChange)="password.set($event)" [attr.aria-invalid]="submitted() && passwordMissing()"
+                    aria-describedby="login-password-error" />
+                @if (submitted() && passwordMissing()) {
+                    <small id="login-password-error" class="field-error">
+                        <i class="pi pi-exclamation-circle" aria-hidden="true"></i>Enter your password.
+                    </small>
+                }
+            </div>
+            <button pButton type="submit" size="large" [disabled]="isSaving()">
+                @if (isSaving()) {
+                    <i class="pi pi-spin pi-spinner" pButtonIcon></i>
+                }
+                <span pButtonLabel>{{ isSaving() ? 'Signing in…' : 'Sign in' }}</span>
+            </button>
+        </form>
+
+        <p class="login-switch">
+            New to PJM?
+            <a routerLink="/register" [queryParams]="{ returnUrl: returnUrl() }">Create an account</a>
+        </p>
+    </section>
+</div>
