@@ -1,3 +1,5 @@
 <Solution>
   <Project Path="PJMConsoleApp/PJMConsoleApp.csproj" />
+  <Project Path="WebAPI.Tests/WebAPI.Tests.csproj" />
+  <Project Path="WebAPI/WebAPI.csproj" />
 </Solution>
