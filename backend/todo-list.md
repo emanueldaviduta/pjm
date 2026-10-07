@@ -1,129 +1,71 @@
-# Todo list: status față de `project-task-manager-tasks.md`
+# Todo list: ce e făcut față de `project-task-manager-tasks.md`
 
-Evaluare făcută pe 2026-10-05, doar prin citirea codului (nimic rulat).
-Progres estimat: **~15–20%**. API-ul funcționează (login, proiecte, task-uri, JWT, deploy manual pe AWS), dar e un singur proiect `WebAPI` cu toată logica în controllere. Clean Architecture nu e implementată.
+Revizuit pe 2026-10-07, prin citirea codului din `backend/src` (nimic rulat pentru această evaluare).
 
-Legendă: `[x]` făcut · `[~]` parțial · `[ ]` lipsă
+Acest fișier ține doar punctele **făcute**. Tot ce e nefăcut sau făcut parțial a fost mutat în [todo-list-2.md](todo-list-2.md), cu ce s-a făcut deja din fiecare punct.
+
+Față de evaluarea din 2026-10-05: codul e împărțit în `Domain` / `Application` / `Infrastructure` / `Api` (schimbarea `restructure-clean-services`), logica a ieșit din controllere în servicii, controllerele au devenit endpoint-uri minimale, iar roluri și membri pe proiect există în backend și în frontend.
+
+Legendă: `[x]` făcut
 
 ## ⚠️ Urgent
 
-- [ ] **Secrete în Git:** parola RDS (`appsettings.json`, `appsettings.Development.json`) și `TokenKey` sunt comise. Schimbă parola RDS și cheia JWT, apoi mută-le în User Secrets / variabile de mediu / SSM.
-- [ ] **Producția folosește SQLite:** `Program.cs` apelează mereu `UseSqlite(...)`, dar `DefaultConnection` din `appsettings.json` (producție) e un connection string de Postgres.
-- [ ] **Migrările rulează automat la pornire** (`Program.cs`, `Database.Migrate()`). Faza 7 cere să nu fie așa în producție.
-- [ ] **Soft delete incomplet:** `GetProjects` și `DeleteProject` întorc și proiectele cu `IsDeleted = true`.
-- [ ] **`PJMSolution.slnx` nu conține `WebAPI`**, doar `PJMConsoleApp`.
+- [x] **Producția nu mai forțează SQLite:** `AddInfrastructure` alege `UseSqlite` doar în Development și `UseNpgsql` altfel.
+- [x] **`PJMSolution.slnx` conține proiectele:** cele 4 din `src/` și testele din `tests/`.
+- [x] **Fișierele `appsettings*.json` nu mai conțin parole sau chei** (în dezvoltare se folosesc User Secrets).
 
 ## Cerințe funcționale
 
 - [x] Înregistrare + autentificare
-- [ ] Proprietarul proiectului (`Project` nu are `OwnerId`)
-- [~] Proiectul conține task-uri (există `ProjectId`, dar fără FK sau relație EF)
-- [~] Câmpurile task-ului (statusurile sunt `Created/InProgress/Completed/OnHold` în loc de `Todo/InProgress/Done`)
-- [~] Listare / filtrare / update / delete (lipsesc update și filtrare la proiecte, delete și filtrare la task-uri)
+- [x] Proiectul conține task-uri (FK `TaskItem.ProjectId` → `Project`, cu relație EF și cascadă)
+- [x] Task-ul poate fi atribuit unui utilizator (`AssignedId` este FK nullable către `AppUser`)
 
-## Faza 0: Setup (1/7)
+## Faza 0: Setup
 
 - [x] Repo Git
-- [ ] `.gitignore` pentru .NET (acoperă doar frontend-ul, de aceea `pjm.db` e urmărit de Git)
-- [ ] Cele 4 proiecte (`Domain`, `Application`, `Infrastructure`, `Api`) și referințele dintre ele
-- [ ] `Directory.Build.props`
-- [ ] `.editorconfig` în backend (există doar în frontend)
-- [ ] Proiectele de teste (xUnit)
-- [ ] PostgreSQL local în Docker Compose
+- [x] Cele 4 proiecte (`Domain`, `Application`, `Infrastructure`, `Api`) și referințele dintre ele, protejate de un test de dependențe (`DependencyRuleTests`)
+- [x] Proiect de teste xUnit (`ProjectManager.Application.Tests`)
 
-## Faza 1: Domain (~2/9)
+## Faza 1: Domain
 
-- [ ] Clasa de bază `Entity` / `AuditableEntity`
 - [x] Entitatea `User` (`AppUser`)
-- [~] Entitatea `Project` (fără `OwnerId`)
 - [x] Entitatea `TaskItem`
-- [~] Enum-urile (`Status`, `Priority`; valorile diferă de specificație)
-- [ ] Metode în entități: `Complete()`, `AssignTo()`, `ChangePriority()` (acum entitățile au doar proprietăți)
-- [ ] Reguli: un task `Done` nu poate fi reasignat; termenul nu poate fi în trecut la creare
-- [ ] `DomainException`
-- [ ] Teste unitare pentru reguli
+- [x] Entitățile pentru roluri și membri: `Role`, `UserRole`, `ProjectUserRole`
 
-## Faza 2: Application (~1/16)
+## Faza 2: Application
 
-- [ ] MediatR și FluentValidation
-- [ ] Interfețele: `IProjectRepository`, `ITaskRepository`, `IUserRepository`, `IUnitOfWork`, `ICurrentUserService`, `IJwtTokenGenerator`, `IPasswordHasher` (există doar `ITokenService`)
-- [~] DTO-uri (doar pentru cont; proiectele și task-urile expun entitățile direct)
-- [ ] Commands: `CreateProject`, `UpdateProject`, `DeleteProject`
-- [ ] Commands: `CreateTask`, `UpdateTask`, `ChangeTaskStatus`, `AssignTask`, `DeleteTask`
-- [~] Commands: `RegisterUser`, `LoginUser` (există ca acțiuni în controller)
-- [ ] Queries: `GetProjects` (cu paginare), `GetProjectById`
-- [ ] Queries: `GetTasksByProject` (filtre, sortare, paginare)
-- [ ] Queries: `GetMyTasks`
-- [~] Validatori (doar DataAnnotations în `RegisterDto` și `AccountDto`)
-- [ ] Pipeline behavior pentru validare
-- [ ] Pipeline behavior pentru logging (opțional)
-- [ ] `NotFoundException`, `ValidationException`, `ForbiddenException`
-- [ ] Autorizare: doar proprietarul modifică/șterge proiectul
-- [ ] `AddApplication()`
-- [ ] Teste unitare pentru handlere
+- [x] `AddApplication()`
+- [x] Serviciile din `Application` în spatele interfețelor, fără tipuri HTTP: `AccountService`, `ProjectService`, `TaskService`, `RoleService`, `ProjectMembershipService`
+- [x] `ServiceResult` pentru rezultatele not-found / conflict / invalid
+- [x] DTO-uri pentru cont, task-uri, roluri și membri
 
-## Faza 3: Infrastructure (~4/11)
+## Faza 3: Infrastructure
 
 - [x] `Npgsql.EntityFrameworkCore.PostgreSQL` și `Microsoft.EntityFrameworkCore.Design`
-- [x] `AppDbContext` (`AppDb`)
-- [ ] Configurări `IEntityTypeConfiguration<T>`
-- [ ] Nume în `snake_case`
-- [ ] Repository-uri și `UnitOfWork`
-- [~] `CreatedAt` / `UpdatedAt` automat (acum din inițializatori sau manual în controller)
-- [x] Migrări (3)
-- [ ] Seed de date
-- [~] `JwtTokenGenerator` (`TokenService` există) și `PasswordHasher` (HMACSHA512 direct în controller; HMAC nu e potrivit pentru parole, folosește PBKDF2 sau `PasswordHasher<T>`)
-- [ ] `AddInfrastructure(configuration)` (există doar `AddIdentityServices`)
-- [ ] Teste de integrare cu Testcontainers
+- [x] `AppDbContext` (`AppDb`) în Infrastructure, expus prin `IAppDbContext`
+- [x] Migrări (7), mutate în `Infrastructure/Persistence/Migrations`
+- [x] `JwtTokenGenerator` (`TokenService`)
+- [x] `AddInfrastructure(configuration, environment)`
+- [x] Seed pentru rolurile `Owner` și `Member` (`HasData`)
 
-## Faza 4: Api (~3/11)
+## Faza 4: Api
 
-- [~] `Program.cs` cu `AddApplication()` și `AddInfrastructure()`
-- [x] Controllere (`AccountController`, `ProjectsController`, `TaskItemController`)
-- [ ] Controllerele trimit doar comenzi prin `IMediator` (acum conțin logica de business)
-- [x] JWT Bearer și `[Authorize]`
-- [~] `ICurrentUserService` (doar o metodă privată `CurrentUser()` în `AccountController`)
-- [ ] Middleware global pentru erori cu `ProblemDetails`
-- [~] OpenAPI (activ doar în development, fără UI și fără Bearer)
+- [x] `Program.cs` cu `AddApplication()` și `AddInfrastructure()`
+- [x] Endpoint-urile (`Account`, `Projects`, `TaskItem`, `Roles`, `ProjectMembership`) doar traduc HTTP și apelează un serviciu, fără acces la date
+- [x] JWT Bearer și autorizare pe endpoint-uri (inclusiv `GET /api/projects`)
 - [x] CORS
-- [ ] Versionare `/api/v1/...`
-- [ ] `/health` cu verificare Postgres
-- [ ] Secretele în afara codului
-- [ ] Detaliu: `TaskItemController` e în namespace-ul `MyApp.Namespace`, rămas din template
+- [x] Swagger UI în development
+- [x] Namespace-ul `MyApp.Namespace` din template a dispărut odată cu controllerele
 
-## Faza 5: Teste (0/5)
+## Faza 5: Teste
 
-- [ ] Teste unitare Domain
-- [ ] Teste unitare Application
-- [ ] Teste de integrare API (`WebApplicationFactory` + Testcontainers)
-- [ ] Scenariile din specificație
-- [ ] Code coverage (Coverlet)
+- [x] Teste unitare pentru `AccountService`, `ProjectService` și `TokenService`, plus testul regulii de dependențe
 
-## Faza 6: Calitate și observabilitate (0/5)
+## Faza 7: Deploy
 
-- [ ] Serilog
-- [ ] Correlation ID
-- [ ] Rate limiting pe autentificare
-- [ ] Refresh token (opțional)
-- [ ] Caching (opțional)
-
-## Faza 7: Deploy (~1/7)
-
-- [ ] Dockerfile multi-stage
-- [ ] `docker-compose.yml` cu API + Postgres
-- [ ] GitHub Actions: build + test (`staging.yml` e încă template-ul cu `echo Hello, world!`)
-- [ ] GitHub Actions: deploy pe Elastic Beanstalk cu OIDC (acum deploy manual, vezi `aws-backend.md`)
 - [x] Bază de date RDS Postgres
-- [ ] Migrări rulate controlat la deploy
-- [ ] Secretele în SSM Parameter Store
 
-## Extra
+## Frontend (în afara specificației backend)
 
-- [~] Soft delete (doar la `Project`, fără filtrare)
-
-## Pașii următori
-
-1. Rezolvă secțiunea „Urgent”.
-2. Adaugă `OwnerId` pe `Project`, verificarea de owner și relațiile EF (FK).
-3. Împarte codul în Domain / Application / Infrastructure / Api și mută logica din controllere.
-4. Mută regulile în entități și scrie primele teste unitare.
+- [x] Tab-urile Tasks / Members pe pagina proiectului, cu adăugare de membri și editare de roluri
+- [x] Atribuirea unui utilizator pe task, din editarea task-ului

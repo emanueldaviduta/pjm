@@ -11,6 +11,8 @@ public static class DependencyInjection
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<IProjectService, ProjectService>();
         services.AddScoped<ITaskService, TaskService>();
+        services.AddScoped<IRoleService, RoleService>();
+        services.AddScoped<IProjectMembershipService, ProjectMembershipService>();
         return services;
     }
 }

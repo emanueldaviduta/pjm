@@ -2,7 +2,7 @@
 
 ## Context
 
-The backend is a single ASP.NET Core project (`backend/WebAPI`) using Minimal API endpoints, EF Core with SQLite in development and PostgreSQL in production, and JWT authentication. `TaskItem` already follows the pattern this change reuses: endpoints in `Endpoints/`, logic in a service behind an interface (`ITaskService` / `TaskService`), responses as DTOs under `Models/DTOs/`, never as entities (entities would form object cycles and `AppUser` carries password hash and salt). Migrations are applied at startup. `Project` has soft delete (`IsDeleted`); nothing enforces ownership yet. See proposal.md for motivation and the specs for required behavior.
+The backend is a layered solution under `backend/src` (Domain, Application, Infrastructure, Api; see the `backend-architecture` spec) using Minimal API endpoints, EF Core with SQLite in development and PostgreSQL in production, and JWT authentication. `TaskItem` already follows the pattern this change reuses: endpoints in the Api project, logic in a service behind an interface in Application (`ITaskService` / `TaskService`, registered in `AddApplication()`), services reaching data through `IAppDbContext`, responses as DTOs in Application, never as entities (entities would form object cycles and `AppUser` carries password hash and salt). Migrations are applied at startup. `Project` has soft delete (`IsDeleted`); nothing enforces ownership yet. See proposal.md for motivation and the specs for required behavior.
 
 ## Goals / Non-Goals
 
@@ -40,12 +40,13 @@ User-role routes sit under `/api/account` because that is where users are alread
 ## Risks / Trade-offs
 
 - [Existing migrations are generated on SQLite and carry SQLite-specific annotations; the new `Roles` table has an auto-increment `Id`] → Verify the migration against PostgreSQL before deploying, and check that `HasData` ids do not clash with later inserts there (acceptable because there is no create-role endpoint).
+- [Checked by generating the PostgreSQL script offline: it is valid SQL, but `Roles.Id` is a plain `INTEGER` (no identity) and `ProjectUserRoles.CreatedAt` is `TEXT`, because the migrations were generated on SQLite; every `DateTime` column in the earlier migrations has the same `TEXT` type] → Not new to this change. Production on PostgreSQL needs a provider-specific migration set (generated against Npgsql) before deployment; the missing identity on `Roles.Id` is harmless while roles are only seeded.
 - [Any authenticated user can add members and roles, including to projects they have nothing to do with] → Accepted for this change and stated in the spec; role-based authorization is the follow-up that closes it.
 - [`Project` has no owner, so `Owner` is just a role name with no enforced meaning] → The follow-up change defines what `Owner` may do and how a project gets its first owner.
 - [Granting a user a role in `UserRole` has no effect on anything yet] → It is a prerequisite and has no behavior until authorization uses it.
 
 ## Migration Plan
 
-1. Add the three models and configuration, then generate one migration (`dotnet ef migrations add AddProjectRoles`).
+1. Add the three models and configuration, then generate one migration (`dotnet ef migrations add AddProjectRoles --project src/ProjectManager.Infrastructure --startup-project src/ProjectManager.Api`).
 2. Apply it through the existing startup `Migrate()` in development. For production, apply as for other migrations; it only adds tables and two rows, so existing data is not touched.
 3. Rollback: the migration's `Down` drops the three tables; no existing table is altered.

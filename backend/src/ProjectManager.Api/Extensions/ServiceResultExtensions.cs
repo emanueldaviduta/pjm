@@ -12,6 +12,13 @@ public static class ServiceResultExtensions
         _ => FromFailure(result.Status, result.Message)
     };
 
+    /// <summary>Maps a service outcome that created something: Ok is 201 with the value.</summary>
+    public static IResult ToCreatedHttpResult<T>(this ServiceResult<T> result, string uri) => result.Status switch
+    {
+        ServiceStatus.Ok => TypedResults.Created(uri, result.Value),
+        _ => FromFailure(result.Status, result.Message)
+    };
+
     /// <summary>Maps a service outcome that has no value: Ok is 204.</summary>
     public static IResult ToHttpResult(this ServiceResult result) => result.Status switch
     {

@@ -27,7 +27,7 @@ None. The project has no existing specs under `openspec/specs/`.
 
 ## Impact
 
-- **Backend (`backend/WebAPI`)**: new models `Role`, `UserRole`, `ProjectUserRole`; `AppDb` gets three `DbSet`s plus relationship configuration and seed data; new migration; new endpoint files and services following the `TaskItem` pattern (`Endpoints/`, `Services/`, `Interfaces/`, DTOs under `Models/DTOs/`); `Program.cs` registers the services and maps the endpoints.
+- **Backend (`backend/src`)**: new entities `Role`, `UserRole`, `ProjectUserRole` in Domain; the three `DbSet`s on `IAppDbContext` (Application) and `AppDb` (Infrastructure) plus relationship configuration, seed data and the new migration in Infrastructure; new services, interfaces and DTOs in Application following the `TaskItem` pattern, registered in `AddApplication()`; new endpoint files in the Api project, mapped in `Program.cs`.
 - **Database**: three new tables with foreign keys to `AppUsers`, `Projects` and `Roles`. Dev uses SQLite and production uses PostgreSQL, so the migration must work on both.
 - **Existing behavior**: unchanged. No existing endpoint, DTO or frontend call is modified.
 - **Assumptions recorded here** (interpretation of the request, easy to change): "associate multiple roles" is read as a user-to-role many-to-many, and a user may hold several roles in one project.

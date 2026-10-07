@@ -16,6 +16,8 @@ export interface TaskItem {
   id: number;
   projectId: number;
   assignedId: number | null;
+  /** Display name of the assignee, filled in by the API. */
+  assigned?: string | null;
   title: string;
   description: string;
   status: TaskStatus;
@@ -25,7 +27,7 @@ export interface TaskItem {
   updatedAt?: string;
 }
 
-export type NewTaskItem = Omit<TaskItem, 'id' | 'createdAt' | 'updatedAt'>;
+export type NewTaskItem = Omit<TaskItem, 'id' | 'assigned' | 'createdAt' | 'updatedAt'>;
 
 export const STATUS_LABELS: Record<TaskStatus, string> = {
   [TaskStatus.Created]: 'To do',

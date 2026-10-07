@@ -1,0 +1,94 @@
+<section aria-labelledby="members-title" class="members">
+    <div class="members-header">
+        <h2 id="members-title" class="section-title">Members</h2>
+        <button pButton type="button" size="small" severity="secondary" variant="outlined" (click)="openAdd()">
+            <i class="pi pi-user-plus" aria-hidden="true"></i><span pButtonLabel>Add member</span>
+        </button>
+    </div>
+
+    @switch (state()) {
+        @case ('unauthorized') {
+            <p class="muted" role="alert">
+                Your session expired. <a routerLink="/login" [queryParams]="{ returnUrl: '/projects/' + projectId() }">Sign in again</a>.
+            </p>
+        }
+        @case ('error') {
+            <p class="muted" role="alert">Could not load the members.</p>
+            <button pButton type="button" size="small" severity="secondary" (click)="reload()"><span pButtonLabel>Try again</span></button>
+        }
+        @case ('ready') {
+            @if (members().length) {
+                <ul class="member-list">
+                    @for (member of members(); track member.userId) {
+                        <li class="member">
+                            <span class="avatar" aria-hidden="true">{{ initials(member) }}</span>
+                            <div class="member-main">
+                                <span class="member-name">{{ nameOf(member) }}</span>
+                                <span class="muted member-email">{{ member.email }}</span>
+                                <ul class="roles" [attr.aria-label]="'Roles of ' + nameOf(member)">
+                                    @for (role of member.roles; track role.id) {
+                                        <li class="role-chip">
+                                            <i [class]="role.name === 'Owner' ? 'pi pi-shield' : 'pi pi-user'" aria-hidden="true"></i>
+                                            <span>{{ role.name }}</span>
+                                            <button type="button" class="chip-remove" (click)="removeRole(member, role)"
+                                                [attr.aria-label]="'Remove ' + role.name + ' role from ' + nameOf(member)">
+                                                <i class="pi pi-times" aria-hidden="true"></i>
+                                            </button>
+                                        </li>
+                                    }
+                                </ul>
+                                @if (availableRoles(member).length) {
+                                    <p-select class="add-role" [options]="availableRoles(member)" optionLabel="name" optionValue="id"
+                                        placeholder="Add role" size="small" [ngModel]="null" (ngModelChange)="addRole(member, $event)"
+                                        [ariaLabel]="'Add a role to ' + nameOf(member)" appendTo="body" />
+                                }
+                            </div>
+                            <button pButton type="button" size="small" severity="danger" variant="text" (click)="removeMember(member)"
+                                [attr.aria-label]="'Remove ' + nameOf(member) + ' from project'">
+                                <i class="pi pi-trash" aria-hidden="true"></i>
+                            </button>
+                        </li>
+                    }
+                </ul>
+            } @else {
+                <p class="muted">No members yet. Use “Add member” to bring people in.</p>
+            }
+        }
+        @default {
+            <p class="muted" role="status">Loading members…</p>
+        }
+    }
+</section>
+
+<p-dialog header="Add member" [modal]="true" [visible]="dialogOpen()" (visibleChange)="dialogOpen.set($event)"
+    [style]="{ width: '28rem', maxWidth: '95vw' }" [draggable]="false">
+    <div class="dialog-fields">
+        <label for="member-user">Person</label>
+        <p-autocomplete inputId="member-user" [ngModel]="selectedUser()" (ngModelChange)="selectedUser.set($event)"
+            [suggestions]="suggestions()" (completeMethod)="search($event.query)" optionLabel="label" [dropdown]="true"
+            [forceSelection]="true" placeholder="Search by name or email" [showEmptyMessage]="true" emptyMessage="No user found"
+            appendTo="body" [style]="{ width: '100%' }" [inputStyle]="{ width: '100%' }">
+            <ng-template #item let-option>
+                <div class="option">
+                    <span>{{ option.label }}</span>
+                    @if (option.isMember) {
+                        <span class="member-tag">Already a member</span>
+                    }
+                </div>
+            </ng-template>
+        </p-autocomplete>
+
+        <label for="member-role">Role</label>
+        <p-select inputId="member-role" [options]="roleOptions()" optionLabel="name" optionValue="id" optionDisabled="disabled"
+            [ngModel]="roleId()" (ngModelChange)="roleId.set($event)" appendTo="body" [style]="{ width: '100%' }" />
+        @if (selectedUser() && roleId() !== null && !canConfirm() && !isSaving()) {
+            <p class="muted hint" role="status">This person already has that role in the project. Pick another role.</p>
+        }
+    </div>
+    <ng-template #footer>
+        <button pButton type="button" severity="secondary" variant="outlined" (click)="dialogOpen.set(false)"><span pButtonLabel>Cancel</span></button>
+        <button pButton type="button" [disabled]="!canConfirm()" (click)="confirmAdd()"><span pButtonLabel>Add</span></button>
+    </ng-template>
+</p-dialog>
+
+<p-confirmdialog />

@@ -43,5 +43,7 @@ app.UseHttpsRedirection();
 app.MapAccountEndpoints();
 app.MapProjectEndpoints();
 app.MapTaskItemEndpoints();
+app.MapRoleEndpoints();
+app.MapProjectMembershipEndpoints();
 
 app.Run();

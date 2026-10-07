@@ -9,6 +9,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { TableModule } from 'primeng/table';
+import { TabsModule } from 'primeng/tabs';
 import { ToastModule } from 'primeng/toast';
 import { projectKey } from '../_models/project';
 import {
@@ -16,14 +17,16 @@ import {
 } from '../_models/task-item';
 import { ProjectService } from '../_services/project.service';
 import { TaskService } from '../_services/task.service';
+import { ProjectMembers } from '../project-members/project-members';
 import { TaskDetails } from '../task-details/task-details';
 
 type View = 'board' | 'list';
+type Tab = 'tasks' | 'members';
 
 @Component({
   imports: [
     DatePipe, FormsModule, RouterLink, AutoFocusModule, ButtonModule, InputTextModule, ProgressBarModule,
-    SelectButtonModule, TableModule, TaskDetails, ToastModule,
+    ProjectMembers, SelectButtonModule, TableModule, TabsModule, TaskDetails, ToastModule,
   ],
   providers: [MessageService],
   selector: 'app-project-detail',
@@ -64,6 +67,7 @@ export class ProjectDetail implements OnInit {
     return { done, total, percent: total ? Math.round((done / total) * 100) : 0 };
   });
 
+  protected readonly tab = signal<Tab>('tasks');
   protected readonly view = signal<View>('board');
   protected readonly selectedId = signal<number | null>(null);
   protected readonly selectedTask = computed(() => this.tasks().find(t => t.id === this.selectedId()));

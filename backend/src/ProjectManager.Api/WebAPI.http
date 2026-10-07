@@ -4,3 +4,118 @@ GET {{WebAPI_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+
+### Roles and project members
+### Run the requests below from top to bottom. "expect" is the status each one returns.
+### The two seeded roles are Owner (id 1) and Member (id 2); projects 1 and 2 are the seeded ones.
+
+# @name register
+# expect: 200
+POST {{WebAPI_HostAddress}}/api/account/register
+Content-Type: application/json
+
+{
+  "firstName": "Demo",
+  "lastName": "User",
+  "email": "{{$guid}}@example.com",
+  "password": "Demo12345"
+}
+
+###
+
+# @name me
+# expect: 200
+GET {{WebAPI_HostAddress}}/api/account/me
+Authorization: Bearer {{register.response.body.$.token}}
+
+###
+
+# expect: 401
+GET {{WebAPI_HostAddress}}/api/roles
+
+###
+
+# expect: 200
+GET {{WebAPI_HostAddress}}/api/roles
+Authorization: Bearer {{register.response.body.$.token}}
+
+###
+
+# expect: 201
+POST {{WebAPI_HostAddress}}/api/account/users/{{me.response.body.$.id}}/roles
+Authorization: Bearer {{register.response.body.$.token}}
+Content-Type: application/json
+
+{ "roleId": 2 }
+
+###
+
+# expect: 409
+POST {{WebAPI_HostAddress}}/api/account/users/{{me.response.body.$.id}}/roles
+Authorization: Bearer {{register.response.body.$.token}}
+Content-Type: application/json
+
+{ "roleId": 2 }
+
+###
+
+# expect: 200
+GET {{WebAPI_HostAddress}}/api/account/users/{{me.response.body.$.id}}/roles
+Authorization: Bearer {{register.response.body.$.token}}
+
+###
+
+# expect: 204
+DELETE {{WebAPI_HostAddress}}/api/account/users/{{me.response.body.$.id}}/roles/2
+Authorization: Bearer {{register.response.body.$.token}}
+
+###
+
+# expect: 201
+POST {{WebAPI_HostAddress}}/api/projects/1/members
+Authorization: Bearer {{register.response.body.$.token}}
+Content-Type: application/json
+
+{ "userId": {{me.response.body.$.id}}, "roleId": 2 }
+
+###
+
+# expect: 201
+POST {{WebAPI_HostAddress}}/api/projects/1/members
+Authorization: Bearer {{register.response.body.$.token}}
+Content-Type: application/json
+
+{ "userId": {{me.response.body.$.id}}, "roleId": 1 }
+
+###
+
+# expect: 409
+POST {{WebAPI_HostAddress}}/api/projects/1/members
+Authorization: Bearer {{register.response.body.$.token}}
+Content-Type: application/json
+
+{ "userId": {{me.response.body.$.id}}, "roleId": 1 }
+
+###
+
+# expect: 200
+GET {{WebAPI_HostAddress}}/api/projects/1/members
+Authorization: Bearer {{register.response.body.$.token}}
+
+###
+
+# expect: 204
+DELETE {{WebAPI_HostAddress}}/api/projects/1/members/{{me.response.body.$.id}}/roles/1
+Authorization: Bearer {{register.response.body.$.token}}
+
+###
+
+# expect: 204
+DELETE {{WebAPI_HostAddress}}/api/projects/1/members/{{me.response.body.$.id}}
+Authorization: Bearer {{register.response.body.$.token}}
+
+###
+
+# expect: 404
+DELETE {{WebAPI_HostAddress}}/api/projects/1/members/{{me.response.body.$.id}}
+Authorization: Bearer {{register.response.body.$.token}}
