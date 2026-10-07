@@ -1,10 +1,12 @@
 
-namespace WebAPI.Models;
+namespace ProjectManager.Domain.Entities;
 public class TaskItem
 {
     public int Id { get; set; }
     public required int ProjectId { get; set; }
-    public required int AssignedId { get; set; }
+    public Project? Project { get; set; }
+    public int? AssignedId { get; set; }
+    public AppUser? Assigned { get; set; }
     public required string Title { get; set; }
     public required string Description { get; set; }
 

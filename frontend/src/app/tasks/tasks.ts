@@ -109,7 +109,7 @@ export class Tasks implements OnInit {
     this.isSaving.set(true);
     this.taskService.create({
       projectId: this.projectId()!,
-      assignedId: 0,
+      assignedId: null,
       title: this.title().trim(),
       description: this.description().trim(),
       status: this.status(),

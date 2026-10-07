@@ -45,6 +45,13 @@
             </div>
         </div>
         <div class="field">
+            <label for="task-assignee">Assignee <span class="muted">(optional)</span></label>
+            <p-select inputId="task-assignee" name="assignee" [options]="assigneeOptions()" optionLabel="label"
+                optionValue="value" appendTo="body" [fluid]="true" [filter]="true" filterBy="label" [showClear]="true"
+                placeholder="Unassigned" emptyMessage="This project has no members yet" [ngModel]="assignedId()"
+                (ngModelChange)="assignedId.set($event ?? null)" />
+        </div>
+        <div class="field">
             <label for="task-due">Due date <span class="muted">(optional)</span></label>
             <p-datepicker inputId="task-due" name="dueDate" dateFormat="M d, yy" appendTo="body" [fluid]="true"
                 [showIcon]="true" [showClear]="true" [showButtonBar]="true" [ngModel]="dueDate()"
@@ -76,6 +83,8 @@
                 <i class="pi pi-flag" aria-hidden="true"></i>{{ priorityLabels[t.priority] }}
             </span>
         </dd>
+        <dt>Assignee</dt>
+        <dd>{{ t.assignedId !== null ? (t.assigned || 'User ' + t.assignedId) : 'Unassigned' }}</dd>
         <dt>Due</dt>
         <dd>{{ t.dueDate ? (t.dueDate | date: 'mediumDate') : 'No date' }}</dd>
         <dt>Created</dt>

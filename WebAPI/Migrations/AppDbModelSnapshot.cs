@@ -2,22 +2,25 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using WebAPI.Data;
+using ProjectManager.Infrastructure.Persistence;
 
 #nullable disable
 
-namespace WebAPI.Migrations
+namespace ProjectManager.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDb))]
-    partial class AppDbModelSnapshot : ModelSnapshot
+    [Migration("20261007090858_TaskItemAssignedNullable")]
+    partial class TaskItemAssignedNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.12");
 
-            modelBuilder.Entity("WebAPI.Models.AppUser", b =>
+            modelBuilder.Entity("ProjectManager.Domain.Entities.AppUser", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -51,7 +54,7 @@ namespace WebAPI.Migrations
                     b.ToTable("AppUsers");
                 });
 
-            modelBuilder.Entity("WebAPI.Models.Project", b =>
+            modelBuilder.Entity("ProjectManager.Domain.Entities.Project", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -79,13 +82,13 @@ namespace WebAPI.Migrations
                     b.ToTable("Projects");
                 });
 
-            modelBuilder.Entity("WebAPI.Models.TaskItem", b =>
+            modelBuilder.Entity("ProjectManager.Domain.Entities.TaskItem", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("AssignedId")
+                    b.Property<int?>("AssignedId")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreatedAt")

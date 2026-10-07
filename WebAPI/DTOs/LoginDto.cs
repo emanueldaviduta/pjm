@@ -1,5 +1,5 @@
 
-namespace WebAPI.DTOs;
+namespace ProjectManager.Application.DTOs;
 
 public class LoginDto
 {

@@ -28,6 +28,13 @@
                 </div>
             </header>
 
+            <p-tabs [value]="tab()" (valueChange)="tab.set($any($event))">
+                <p-tablist>
+                    <p-tab value="tasks"><i class="pi pi-check-square" aria-hidden="true"></i> Tasks</p-tab>
+                    <p-tab value="members"><i class="pi pi-users" aria-hidden="true"></i> Members</p-tab>
+                </p-tablist>
+                <p-tabpanels>
+                    <p-tabpanel value="tasks">
             <div class="toolbar">
                 <p-selectbutton [options]="viewOptions" optionLabel="label" optionValue="value" [allowEmpty]="false"
                     [ngModel]="view()" (ngModelChange)="view.set($event)" ariaLabelledBy="view-label">
@@ -120,6 +127,12 @@
                     </ng-template>
                 </p-table>
             }
+                    </p-tabpanel>
+                    <p-tabpanel value="members">
+                        <app-project-members [projectId]="id()" />
+                    </p-tabpanel>
+                </p-tabpanels>
+            </p-tabs>
         } @else if (projectService.state() === 'loading' || projectService.state() === 'idle') {
             <p class="muted" role="status">Loading project…</p>
         } @else if (projectService.state() === 'unauthorized') {
@@ -138,21 +151,9 @@
         }
     </div>
 
-    @if (project(); as p) {
-        <aside class="page-aside" [attr.aria-label]="selectedTask() ? 'Task details' : 'Project details'">
-            @if (selectedTask(); as task) {
-                <app-task-details [task]="task" [projectKey]="key()" (closed)="selectedId.set(null)" />
-            } @else {
-                <h2 class="section-title">About this project</h2>
-                <p class="muted">{{ p.description || 'No description yet.' }}</p>
-                <dl class="details">
-                    <dt>Tasks</dt>
-                    <dd>{{ progress().done }} of {{ progress().total }} done</dd>
-                    <dt>Created</dt>
-                    <dd>{{ p.createdAt | date: 'mediumDate' }}</dd>
-                </dl>
-                <p class="muted hint">Select a task to see its details here.</p>
-            }
+    @if (selectedTask(); as task) {
+        <aside class="page-aside" aria-label="Task details">
+            <app-task-details [task]="task" [projectKey]="key()" (closed)="selectedId.set(null)" />
         </aside>
     }
 </div>

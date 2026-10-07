@@ -1,4 +1,4 @@
-namespace WebAPI.Models;
+namespace ProjectManager.Domain.Entities;
 
 public class AppUser
 {

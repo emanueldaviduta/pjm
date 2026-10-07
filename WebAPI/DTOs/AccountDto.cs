@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace WebAPI.DTOs;
+namespace ProjectManager.Application.DTOs;
 
 public class AccountDto
 {
