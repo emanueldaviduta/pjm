@@ -15,7 +15,7 @@ export enum TaskPriority {
 export interface TaskItem {
   id: number;
   projectId: number;
-  assignedId: number;
+  assignedId: number | null;
   title: string;
   description: string;
   status: TaskStatus;

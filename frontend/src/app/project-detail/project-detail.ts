@@ -101,7 +101,7 @@ export class ProjectDetail implements OnInit {
     this.taskService
       .create({
         projectId: this.id(),
-        assignedId: 0,
+        assignedId: null,
         title,
         description: '',
         status,

@@ -1,5 +1,11 @@
 <Solution>
-  <Project Path="PJMConsoleApp/PJMConsoleApp.csproj" />
-  <Project Path="WebAPI.Tests/WebAPI.Tests.csproj" />
-  <Project Path="WebAPI/WebAPI.csproj" />
+  <Folder Name="/src/">
+    <Project Path="src/ProjectManager.Domain/ProjectManager.Domain.csproj" />
+    <Project Path="src/ProjectManager.Application/ProjectManager.Application.csproj" />
+    <Project Path="src/ProjectManager.Infrastructure/ProjectManager.Infrastructure.csproj" />
+    <Project Path="src/ProjectManager.Api/ProjectManager.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ProjectManager.Application.Tests/ProjectManager.Application.Tests.csproj" />
+  </Folder>
 </Solution>

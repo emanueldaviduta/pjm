@@ -45,6 +45,9 @@
 
 #Backend
 
+**.db
+**.pem
+
 [Dd]ebug/
 [Rr]elease/
 x64/
