@@ -14,7 +14,7 @@ if(builder.Environment.IsDevelopment())
     builder.Configuration.AddUserSecrets<Program>();
 
 builder.Services.AddApplication();
-builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
+builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddIdentityServices(builder.Configuration);
 builder.Services.AddAuthorization();
 builder.Services.AddCors();

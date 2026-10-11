@@ -63,3 +63,5 @@ x64/
 *.suo
 *.user
 *.sln.docstates
+#Docker
+.env
