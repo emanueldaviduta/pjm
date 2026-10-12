@@ -36,6 +36,7 @@ public static class ServiceResultExtensions
         ServiceStatus.Conflict => TypedResults.Conflict(message),
         ServiceStatus.Invalid => TypedResults.BadRequest(message),
         ServiceStatus.Unauthorized => TypedResults.Unauthorized(),
+        ServiceStatus.Forbidden => TypedResults.StatusCode(StatusCodes.Status403Forbidden),
         _ => TypedResults.StatusCode(StatusCodes.Status500InternalServerError)
     };
 }

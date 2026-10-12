@@ -48,6 +48,7 @@ describe('ProjectMembers', () => {
     vi.spyOn(messages, 'add');
     fixture = TestBed.createComponent(ProjectMembers);
     fixture.componentRef.setInput('projectId', 1);
+    fixture.componentRef.setInput('canManage', true);
     ui = fixture.componentInstance as unknown as Internals;
     fixture.detectChanges();
   });
@@ -167,6 +168,35 @@ describe('ProjectMembers', () => {
     });
   });
 
+  describe('owner-only controls', () => {
+    const controls = () => ({
+        add: [...fixture.nativeElement.querySelectorAll('button')].some((b: HTMLElement) => b.textContent?.includes('Add member')),
+        chipRemove: fixture.nativeElement.querySelectorAll('.chip-remove').length,
+        addRole: fixture.nativeElement.querySelectorAll('.add-role').length,
+        removeMember: fixture.nativeElement.querySelectorAll('button[aria-label$="from project"]').length,
+    });
+
+    it('shows the management controls to an owner', () => {
+      load([ana()]);
+      expect(controls()).toEqual({ add: true, chipRemove: 1, addRole: 1, removeMember: 1 });
+    });
+
+    it('shows members and badges read-only to a non-owner', () => {
+      fixture.componentRef.setInput('canManage', false);
+      load([ana([ROLES[0], ROLES[1]])]);
+      expect(text()).toContain('Ana Pop');
+      expect(fixture.nativeElement.querySelectorAll('.role-chip')).toHaveLength(2);
+      expect(controls()).toEqual({ add: false, chipRemove: 0, addRole: 0, removeMember: 0 });
+    });
+
+    it('does not invite a non-owner to add members in the empty state', () => {
+      fixture.componentRef.setInput('canManage', false);
+      load([]);
+      expect(text()).toContain('No members yet');
+      expect(text()).not.toContain('Add member');
+    });
+  });
+
   describe('edit and remove', () => {
     it('adds a second role to a member', () => {
       load([ana()]);
@@ -223,6 +253,37 @@ describe('ProjectMembers', () => {
       fixture.detectChanges();
       expect(messages.add).toHaveBeenCalledWith(expect.objectContaining({ severity: 'error' }));
       expect(text()).toContain('Ana Pop');
+    });
+
+    it('says only owners can manage members on 403, and refreshes the list and projects', () => {
+      load([ana()]);
+      ui.addRole(ana(), 1);
+      http.expectOne(r => r.method === 'POST').flush('', { status: 403, statusText: 'Forbidden' });
+      membersReq().flush([ana()]);
+      http.expectOne(r => r.method === 'GET' && r.url.endsWith('/projects')).flush([]);
+      expect(messages.add).toHaveBeenCalledWith(
+        expect.objectContaining({ severity: 'error', detail: 'Only project owners can manage members.' }),
+      );
+    });
+
+    it('shows the server explanation when the last owner cannot be removed', () => {
+      load([ana([ROLES[0], ROLES[1]])]);
+      ui.removeRole(ana([ROLES[0], ROLES[1]]), ROLES[0]);
+      http.expectOne(r => r.method === 'DELETE').flush('A project must keep at least one owner.', { status: 400, statusText: 'Bad Request' });
+      membersReq().flush([ana([ROLES[0], ROLES[1]])]);
+      fixture.detectChanges();
+      expect(messages.add).toHaveBeenCalledWith(
+        expect.objectContaining({ severity: 'error', detail: 'A project must keep at least one owner.' }),
+      );
+      expect(fixture.nativeElement.querySelectorAll('.role-chip')).toHaveLength(2);
+    });
+
+    it('reloads projects after a successful change, so own role changes take effect', () => {
+      load([ana()]);
+      ui.addRole(ana(), 1);
+      http.expectOne(r => r.method === 'POST').flush(null, { status: 201, statusText: 'Created' });
+      membersReq().flush([ana([ROLES[0], ROLES[1]])]);
+      http.expectOne(r => r.method === 'GET' && r.url.endsWith('/projects')).flush([]);
     });
 
     it('tells the person to sign in again when an action returns 401', () => {

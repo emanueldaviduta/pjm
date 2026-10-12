@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using ProjectManager.Api.Extensions;
 using ProjectManager.Application.DTOs;
 using ProjectManager.Application.Interfaces;
@@ -20,16 +21,24 @@ public static class ProjectMembershipEndpoints
         return app;
     }
 
-    private static async Task<IResult> GetMembers(int projectId, IProjectMembershipService members) =>
-        (await members.GetMembersAsync(projectId)).ToHttpResult();
+    private static async Task<IResult> GetMembers(int projectId, ClaimsPrincipal principal, IProjectMembershipService members) =>
+        principal.GetUserId() is { } callerId
+            ? (await members.GetMembersAsync(callerId, projectId)).ToHttpResult()
+            : TypedResults.Unauthorized();
 
-    private static async Task<IResult> AddMember(int projectId, AddMemberRequest request, IProjectMembershipService members) =>
-        (await members.AddRoleAsync(projectId, request.UserId, request.RoleId))
-            .ToCreatedHttpResult($"/api/projects/{projectId}/members");
+    private static async Task<IResult> AddMember(int projectId, AddMemberRequest request, ClaimsPrincipal principal, IProjectMembershipService members) =>
+        principal.GetUserId() is { } callerId
+            ? (await members.AddRoleAsync(callerId, projectId, request.UserId, request.RoleId))
+                .ToCreatedHttpResult($"/api/projects/{projectId}/members")
+            : TypedResults.Unauthorized();
 
-    private static async Task<IResult> RemoveMember(int projectId, int userId, IProjectMembershipService members) =>
-        (await members.RemoveMemberAsync(projectId, userId)).ToHttpResult();
+    private static async Task<IResult> RemoveMember(int projectId, int userId, ClaimsPrincipal principal, IProjectMembershipService members) =>
+        principal.GetUserId() is { } callerId
+            ? (await members.RemoveMemberAsync(callerId, projectId, userId)).ToHttpResult()
+            : TypedResults.Unauthorized();
 
-    private static async Task<IResult> RemoveRole(int projectId, int userId, int roleId, IProjectMembershipService members) =>
-        (await members.RemoveRoleAsync(projectId, userId, roleId)).ToHttpResult();
+    private static async Task<IResult> RemoveRole(int projectId, int userId, int roleId, ClaimsPrincipal principal, IProjectMembershipService members) =>
+        principal.GetUserId() is { } callerId
+            ? (await members.RemoveRoleAsync(callerId, projectId, userId, roleId)).ToHttpResult()
+            : TypedResults.Unauthorized();
 }

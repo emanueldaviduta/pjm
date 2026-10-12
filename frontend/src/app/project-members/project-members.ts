@@ -9,9 +9,11 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { DialogModule } from 'primeng/dialog';
 import { SelectModule } from 'primeng/select';
 import { Account } from '../_models/account';
+import { apiErrorMessage } from '../_services/account.service';
 import { ProjectMember, memberInitials, memberName } from '../_models/project-member';
 import { Role } from '../_models/role';
 import { ProjectMemberService } from '../_services/project-member.service';
+import { ProjectService } from '../_services/project.service';
 import { RoleService } from '../_services/role.service';
 import { UserDirectoryService } from '../_services/user-directory.service';
 
@@ -23,7 +25,7 @@ interface UserOption {
 
 const DEFAULT_ROLE = 'Member';
 
-/** Lists the members of a project and lets the user add people, change their roles and remove them. */
+/** Lists the members of a project; owners can also add people, change their roles and remove them. */
 @Component({
   imports: [AutoCompleteModule, ButtonModule, ConfirmDialogModule, DialogModule, FormsModule, RouterLink, SelectModule],
   providers: [ConfirmationService],
@@ -33,10 +35,13 @@ const DEFAULT_ROLE = 'Member';
 })
 export class ProjectMembers implements OnInit {
   readonly projectId = input.required<number>();
+  /** Only owners get the add, change-role and remove controls; the server enforces the same rule. */
+  readonly canManage = input(false);
 
   protected memberService = inject(ProjectMemberService);
   protected roleService = inject(RoleService);
   protected userDirectory = inject(UserDirectoryService);
+  private projectService = inject(ProjectService);
   private confirmation = inject(ConfirmationService);
   private messages = inject(MessageService);
 
@@ -116,6 +121,7 @@ export class ProjectMembers implements OnInit {
         this.isSaving.set(false);
         this.dialogOpen.set(false);
         this.toast('success', `${user.label} added to the project`);
+        this.afterChange();
       },
       error: error => {
         this.isSaving.set(false);
@@ -129,6 +135,7 @@ export class ProjectMembers implements OnInit {
   protected addRole(member: ProjectMember, roleId: number | null) {
     if (roleId === null) return;
     this.memberService.addRole(this.projectId(), member.userId, roleId).subscribe({
+      next: () => this.afterChange(),
       error: error => this.fail(error, 'Failed to add role', 'That user already has this role in the project'),
     });
   }
@@ -140,6 +147,7 @@ export class ProjectMembers implements OnInit {
       return;
     }
     this.memberService.removeRole(this.projectId(), member.userId, role.id).subscribe({
+      next: () => this.afterChange(),
       error: error => this.fail(error, 'Failed to remove role'),
     });
   }
@@ -154,7 +162,10 @@ export class ProjectMembers implements OnInit {
       rejectButtonProps: { severity: 'secondary', variant: 'outlined' },
       accept: () =>
         this.memberService.removeMember(this.projectId(), member.userId).subscribe({
-          next: () => this.toast('success', `${memberName(member)} removed from the project`),
+          next: () => {
+            this.toast('success', `${memberName(member)} removed from the project`);
+            this.afterChange();
+          },
           error: error => this.fail(error, 'Failed to remove member'),
         }),
     });
@@ -164,12 +175,23 @@ export class ProjectMembers implements OnInit {
     return `${user.firstName} ${user.lastName} (${user.email})`;
   }
 
+  /** The change may have touched the signed-in user's own roles, so refresh which projects they own or see. */
+  private afterChange() {
+    this.projectService.load(true);
+  }
+
   private fail(error: unknown, detail: string, conflictDetail?: string) {
     const status = error instanceof HttpErrorResponse ? error.status : 0;
     if (status === 401) {
       this.toast('error', 'Your session expired. Sign in again.');
+    } else if (status === 403) {
+      this.toast('error', 'Only project owners can manage members.');
+      this.afterChange();
     } else if (status === 409 && conflictDetail) {
       this.toast('warn', conflictDetail);
+    } else if (status === 400) {
+      // e.g. "A project must keep at least one owner."
+      this.toast('error', apiErrorMessage(error as HttpErrorResponse, detail));
     } else {
       this.toast('error', detail);
     }

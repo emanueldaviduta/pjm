@@ -1,9 +1,11 @@
 <section aria-labelledby="members-title" class="members">
     <div class="members-header">
         <h2 id="members-title" class="section-title">Members</h2>
-        <button pButton type="button" size="small" severity="secondary" variant="outlined" (click)="openAdd()">
-            <i class="pi pi-user-plus" aria-hidden="true"></i><span pButtonLabel>Add member</span>
-        </button>
+        @if (canManage()) {
+            <button pButton type="button" size="small" severity="secondary" variant="outlined" (click)="openAdd()">
+                <i class="pi pi-user-plus" aria-hidden="true"></i><span pButtonLabel>Add member</span>
+            </button>
+        }
     </div>
 
     @switch (state()) {
@@ -30,28 +32,32 @@
                                         <li class="role-chip">
                                             <i [class]="role.name === 'Owner' ? 'pi pi-shield' : 'pi pi-user'" aria-hidden="true"></i>
                                             <span>{{ role.name }}</span>
-                                            <button type="button" class="chip-remove" (click)="removeRole(member, role)"
-                                                [attr.aria-label]="'Remove ' + role.name + ' role from ' + nameOf(member)">
-                                                <i class="pi pi-times" aria-hidden="true"></i>
-                                            </button>
+                                            @if (canManage()) {
+                                                <button type="button" class="chip-remove" (click)="removeRole(member, role)"
+                                                    [attr.aria-label]="'Remove ' + role.name + ' role from ' + nameOf(member)">
+                                                    <i class="pi pi-times" aria-hidden="true"></i>
+                                                </button>
+                                            }
                                         </li>
                                     }
                                 </ul>
-                                @if (availableRoles(member).length) {
+                                @if (canManage() && availableRoles(member).length) {
                                     <p-select class="add-role" [options]="availableRoles(member)" optionLabel="name" optionValue="id"
                                         placeholder="Add role" size="small" [ngModel]="null" (ngModelChange)="addRole(member, $event)"
                                         [ariaLabel]="'Add a role to ' + nameOf(member)" appendTo="body" />
                                 }
                             </div>
-                            <button pButton type="button" size="small" severity="danger" variant="text" (click)="removeMember(member)"
-                                [attr.aria-label]="'Remove ' + nameOf(member) + ' from project'">
-                                <i class="pi pi-trash" aria-hidden="true"></i>
-                            </button>
+                            @if (canManage()) {
+                                <button pButton type="button" size="small" severity="danger" variant="text" (click)="removeMember(member)"
+                                    [attr.aria-label]="'Remove ' + nameOf(member) + ' from project'">
+                                    <i class="pi pi-trash" aria-hidden="true"></i>
+                                </button>
+                            }
                         </li>
                     }
                 </ul>
             } @else {
-                <p class="muted">No members yet. Use “Add member” to bring people in.</p>
+                <p class="muted">No members yet.@if (canManage()) { Use “Add member” to bring people in.}</p>
             }
         }
         @default {

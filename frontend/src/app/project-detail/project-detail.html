@@ -129,7 +129,7 @@
             }
                     </p-tabpanel>
                     <p-tabpanel value="members">
-                        <app-project-members [projectId]="id()" />
+                        <app-project-members [projectId]="id()" [canManage]="isOwner(p)" />
                     </p-tabpanel>
                 </p-tabpanels>
             </p-tabs>

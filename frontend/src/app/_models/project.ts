@@ -5,10 +5,19 @@ export class Project {
   createdAt?: string;
   updatedAt?: string;
   isDeleted?: boolean;
+  /** Names of the roles the signed-in user holds in this project, as sent by the server. */
+  roles?: string[];
   constructor(name: string, description: string) {
     this.name = name;
     this.description = description;
   }
+}
+
+export const OWNER_ROLE = 'Owner';
+
+/** Whether the signed-in user may manage the project's members (and delete it). */
+export function isOwner(project?: Pick<Project, 'roles'>): boolean {
+  return !!project?.roles?.includes(OWNER_ROLE);
 }
 
 /**

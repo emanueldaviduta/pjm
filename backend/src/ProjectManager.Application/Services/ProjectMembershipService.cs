@@ -8,9 +8,9 @@ namespace ProjectManager.Application.Services;
 
 public class ProjectMembershipService(IAppDbContext context) : IProjectMembershipService
 {
-    public async Task<ServiceResult<IReadOnlyList<MemberDto>>> GetMembersAsync(int projectId)
+    public async Task<ServiceResult<IReadOnlyList<MemberDto>>> GetMembersAsync(int callerId, int projectId)
     {
-        if (!await ProjectExists(projectId))
+        if ((await context.RolesInProjectAsync(projectId, callerId)).Count == 0)
         {
             return ServiceResult<IReadOnlyList<MemberDto>>.NotFound("Project not found.");
         }
@@ -18,11 +18,12 @@ public class ProjectMembershipService(IAppDbContext context) : IProjectMembershi
         return ServiceResult<IReadOnlyList<MemberDto>>.Ok(await LoadMembers(projectId, userId: null));
     }
 
-    public async Task<ServiceResult<MemberDto>> AddRoleAsync(int projectId, int userId, int roleId)
+    public async Task<ServiceResult<MemberDto>> AddRoleAsync(int callerId, int projectId, int userId, int roleId)
     {
-        if (!await ProjectExists(projectId))
+        switch (await CheckOwner(callerId, projectId))
         {
-            return ServiceResult<MemberDto>.NotFound("Project not found.");
+            case ServiceStatus.NotFound: return ServiceResult<MemberDto>.NotFound("Project not found.");
+            case ServiceStatus.Forbidden: return ServiceResult<MemberDto>.Forbidden();
         }
 
         if (!await context.AppUsers.AnyAsync(u => u.Id == userId))
@@ -54,11 +55,12 @@ public class ProjectMembershipService(IAppDbContext context) : IProjectMembershi
         return ServiceResult<MemberDto>.Ok((await LoadMembers(projectId, userId)).Single());
     }
 
-    public async Task<ServiceResult> RemoveRoleAsync(int projectId, int userId, int roleId)
+    public async Task<ServiceResult> RemoveRoleAsync(int callerId, int projectId, int userId, int roleId)
     {
-        if (!await ProjectExists(projectId))
+        switch (await CheckOwner(callerId, projectId))
         {
-            return ServiceResult.NotFound("Project not found.");
+            case ServiceStatus.NotFound: return ServiceResult.NotFound("Project not found.");
+            case ServiceStatus.Forbidden: return ServiceResult.Forbidden();
         }
 
         var assignment = await context.ProjectUserRoles.FindAsync(projectId, userId, roleId);
@@ -67,16 +69,22 @@ public class ProjectMembershipService(IAppDbContext context) : IProjectMembershi
             return ServiceResult.NotFound("User does not hold this role in the project.");
         }
 
+        if (await IsLastOwner(projectId, userId, roleId))
+        {
+            return ServiceResult.Invalid(LastOwnerMessage);
+        }
+
         context.ProjectUserRoles.Remove(assignment);
         await context.SaveChangesAsync();
         return ServiceResult.Ok();
     }
 
-    public async Task<ServiceResult> RemoveMemberAsync(int projectId, int userId)
+    public async Task<ServiceResult> RemoveMemberAsync(int callerId, int projectId, int userId)
     {
-        if (!await ProjectExists(projectId))
+        switch (await CheckOwner(callerId, projectId))
         {
-            return ServiceResult.NotFound("Project not found.");
+            case ServiceStatus.NotFound: return ServiceResult.NotFound("Project not found.");
+            case ServiceStatus.Forbidden: return ServiceResult.Forbidden();
         }
 
         var assignments = await context.ProjectUserRoles
@@ -87,13 +95,34 @@ public class ProjectMembershipService(IAppDbContext context) : IProjectMembershi
             return ServiceResult.NotFound("User is not a member of the project.");
         }
 
+        foreach (var assignment in assignments)
+        {
+            if (await IsLastOwner(projectId, userId, assignment.RoleId))
+            {
+                return ServiceResult.Invalid(LastOwnerMessage);
+            }
+        }
+
         context.ProjectUserRoles.RemoveRange(assignments);
         await context.SaveChangesAsync();
         return ServiceResult.Ok();
     }
 
-    private Task<bool> ProjectExists(int projectId) =>
-        context.Projects.AnyAsync(p => p.Id == projectId && !p.IsDeleted);
+    private const string LastOwnerMessage = "A project must keep at least one owner.";
+
+    /// <returns>NotFound when the caller is not a member (or no such project), Forbidden when not an Owner, otherwise Ok.</returns>
+    private async Task<ServiceStatus> CheckOwner(int callerId, int projectId)
+    {
+        var roles = await context.RolesInProjectAsync(projectId, callerId);
+        if (roles.Count == 0) return ServiceStatus.NotFound;
+        return roles.Contains(RoleNames.Owner) ? ServiceStatus.Ok : ServiceStatus.Forbidden;
+    }
+
+    /// <returns>True when removing this role from the user would leave the project without an Owner.</returns>
+    private async Task<bool> IsLastOwner(int projectId, int userId, int roleId) =>
+        await context.Roles.AnyAsync(r => r.Id == roleId && r.Name == RoleNames.Owner) &&
+        !await context.ProjectUserRoles.AnyAsync(p =>
+            p.ProjectId == projectId && p.UserId != userId && p.Role!.Name == RoleNames.Owner);
 
     // Selects only the fields a MemberDto needs, so password hash and salt are never read.
     private async Task<List<MemberDto>> LoadMembers(int projectId, int? userId)

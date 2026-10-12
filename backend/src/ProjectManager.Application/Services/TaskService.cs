@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using ProjectManager.Application.Common;
 using ProjectManager.Application.DTOs;
 using ProjectManager.Application.Interfaces;
 using ProjectManager.Domain.Entities;
@@ -7,14 +8,19 @@ namespace ProjectManager.Application.Services;
 
 public class TaskService(IAppDbContext context) : ITaskService
 {
-    public async Task<IReadOnlyList<TaskItemDto>> GetAllAsync() =>
-        await Query().ToListAsync();
+    public async Task<IReadOnlyList<TaskItemDto>> GetAllAsync(int userId) =>
+        await Query(userId).ToListAsync();
 
-    public Task<TaskItemDto?> GetByIdAsync(int id) =>
-        Query().FirstOrDefaultAsync(t => t.Id == id);
+    public Task<TaskItemDto?> GetByIdAsync(int userId, int id) =>
+        Query(userId).FirstOrDefaultAsync(t => t.Id == id);
 
-    public async Task<TaskItemDto> CreateAsync(TaskItemRequest request)
+    public async Task<TaskItemDto?> CreateAsync(int userId, TaskItemRequest request)
     {
+        if (!await context.VisibleProjects(userId).AnyAsync(p => p.Id == request.ProjectId))
+        {
+            return null;
+        }
+
         var taskItem = new TaskItem
         {
             ProjectId = request.ProjectId,
@@ -28,12 +34,13 @@ public class TaskService(IAppDbContext context) : ITaskService
 
         context.TaskItems.Add(taskItem);
         await context.SaveChangesAsync();
-        return await Query().FirstAsync(t => t.Id == taskItem.Id);
+        return await Query(userId).FirstAsync(t => t.Id == taskItem.Id);
     }
 
-    public async Task<TaskItemDto?> UpdateAsync(int id, TaskItemRequest request)
+    public async Task<TaskItemDto?> UpdateAsync(int userId, int id, TaskItemRequest request)
     {
-        var taskItem = await context.TaskItems.FindAsync(id);
+        var visible = context.VisibleProjects(userId);
+        var taskItem = await context.TaskItems.FirstOrDefaultAsync(t => t.Id == id && visible.Any(p => p.Id == t.ProjectId));
         if (taskItem == null)
         {
             return null;
@@ -47,13 +54,15 @@ public class TaskService(IAppDbContext context) : ITaskService
         taskItem.AssignedId = request.AssignedId;
         taskItem.UpdatedAt = DateTime.UtcNow;
         await context.SaveChangesAsync();
-        return await Query().FirstAsync(t => t.Id == id);
+        return await Query(userId).FirstAsync(t => t.Id == id);
     }
 
     // Projecting to a DTO avoids the Task -> Project -> Tasks cycle and keeps AppUser
-    // (password hash/salt) out of the response.
-    private IQueryable<TaskItemDto> Query() =>
-        context.TaskItems.Select(t => new TaskItemDto
+    // (password hash/salt) out of the response. Only tasks of projects the user is a member of are included.
+    private IQueryable<TaskItemDto> Query(int userId)
+    {
+        var visible = context.VisibleProjects(userId);
+        return context.TaskItems.Where(t => visible.Any(p => p.Id == t.ProjectId)).Select(t => new TaskItemDto
         {
             Id = t.Id,
             ProjectId = t.ProjectId,
@@ -68,4 +77,5 @@ public class TaskService(IAppDbContext context) : ITaskService
             CreatedAt = t.CreatedAt,
             UpdatedAt = t.UpdatedAt
         });
+    }
 }

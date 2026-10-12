@@ -7,7 +7,8 @@ public enum ServiceStatus
     NotFound,
     Conflict,
     Invalid,
-    Unauthorized
+    Unauthorized,
+    Forbidden
 }
 
 public record ServiceResult(ServiceStatus Status, string? Message = null)
@@ -19,6 +20,7 @@ public record ServiceResult(ServiceStatus Status, string? Message = null)
     public static ServiceResult Conflict(string? message = null) => new(ServiceStatus.Conflict, message);
     public static ServiceResult Invalid(string message) => new(ServiceStatus.Invalid, message);
     public static ServiceResult Unauthorized() => new(ServiceStatus.Unauthorized);
+    public static ServiceResult Forbidden() => new(ServiceStatus.Forbidden);
 }
 
 public record ServiceResult<T>(ServiceStatus Status, T? Value = default, string? Message = null)
@@ -30,4 +32,5 @@ public record ServiceResult<T>(ServiceStatus Status, T? Value = default, string?
     public static ServiceResult<T> Conflict(string? message = null) => new(ServiceStatus.Conflict, default, message);
     public static ServiceResult<T> Invalid(string message) => new(ServiceStatus.Invalid, default, message);
     public static ServiceResult<T> Unauthorized() => new(ServiceStatus.Unauthorized);
+    public static ServiceResult<T> Forbidden() => new(ServiceStatus.Forbidden);
 }

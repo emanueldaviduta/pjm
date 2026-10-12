@@ -11,7 +11,7 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { TableModule } from 'primeng/table';
 import { TabsModule } from 'primeng/tabs';
 import { ToastModule } from 'primeng/toast';
-import { projectKey } from '../_models/project';
+import { isOwner, projectKey } from '../_models/project';
 import {
   BOARD_STATUSES, PRIORITY_LABELS, STATUS_LABELS, TaskItem, TaskPriority, TaskStatus,
 } from '../_models/task-item';
@@ -51,6 +51,7 @@ export class ProjectDetail implements OnInit {
 
   protected readonly project = computed(() => this.projectService.projects().find(p => p.id === this.id()));
   protected readonly key = computed(() => projectKey(this.project()?.name));
+  protected readonly isOwner = isOwner;
   protected readonly tasks = computed(() => this.taskService.tasks().filter(t => t.projectId === this.id()));
 
   protected readonly columns = computed(() =>
