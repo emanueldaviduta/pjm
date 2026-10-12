@@ -24,6 +24,8 @@ interface UserOption {
 }
 
 const DEFAULT_ROLE = 'Member';
+/** Roles that can be held in a project; Admin is global and the server rejects it here. */
+const PROJECT_ROLES = ['Owner', 'Member'];
 
 /** Lists the members of a project; owners can also add people, change their roles and remove them. */
 @Component({
@@ -65,8 +67,10 @@ export class ProjectMembers implements OnInit {
     return new Set(member?.roles.map(r => r.id) ?? []);
   });
 
+  private readonly projectRoles = computed(() => this.roleService.roles().filter(r => PROJECT_ROLES.includes(r.name)));
+
   protected readonly roleOptions = computed(() =>
-    this.roleService.roles().map(role => ({ ...role, disabled: this.heldRoleIds().has(role.id) })),
+    this.projectRoles().map(role => ({ ...role, disabled: this.heldRoleIds().has(role.id) })),
   );
 
   protected readonly canConfirm = computed(
@@ -85,7 +89,7 @@ export class ProjectMembers implements OnInit {
   /** Roles a member does not hold yet, offered by the "add role" control. */
   protected availableRoles(member: ProjectMember): Role[] {
     const held = new Set(member.roles.map(r => r.id));
-    return this.roleService.roles().filter(r => !held.has(r.id));
+    return this.projectRoles().filter(r => !held.has(r.id));
   }
 
   // --- Add member -------------------------------------------------------------------------

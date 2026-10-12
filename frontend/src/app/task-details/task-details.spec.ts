@@ -103,3 +103,34 @@ describe('TaskDetails assignee', () => {
     put.flush(task());
   });
 });
+
+describe('TaskDetails attachments', () => {
+  let fixture: ComponentFixture<TaskDetails>;
+
+  const create = (t: TaskItem) => {
+    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    fixture = TestBed.createComponent(TaskDetails);
+    fixture.componentRef.setInput('task', t);
+    fixture.componentRef.setInput('projectKey', 'WEB');
+    fixture.detectChanges();
+  };
+
+  it('links each attachment with its name and size, opening in a new tab', () => {
+    create(task({
+      attachments: [{ id: 1, fileName: 'report.pdf', contentType: 'application/pdf', sizeBytes: 120 * 1024, url: 'https://files.test/report.pdf' }],
+    }));
+    const section = (fixture.nativeElement as HTMLElement).querySelector('[data-test=attachments]')!;
+    const link = section.querySelector('a')!;
+    expect(link.getAttribute('href')).toBe('https://files.test/report.pdf');
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('rel')).toBe('noopener');
+    expect(section.textContent).toContain('report.pdf');
+    expect(section.textContent).toContain('120 KB');
+  });
+
+  it('shows no attachments section when there are none', () => {
+    create(task({ attachments: [] }));
+    expect((fixture.nativeElement as HTMLElement).querySelector('[data-test=attachments]')).toBeNull();
+  });
+});
+

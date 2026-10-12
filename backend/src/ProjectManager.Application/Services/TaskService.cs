@@ -75,7 +75,18 @@ public class TaskService(IAppDbContext context) : ITaskService
             Priority = t.Priority,
             DueDate = t.DueDate,
             CreatedAt = t.CreatedAt,
-            UpdatedAt = t.UpdatedAt
+            UpdatedAt = t.UpdatedAt,
+            Attachments = t.Attachments
+                .OrderBy(a => a.Id)
+                .Select(a => new TaskAttachmentDto
+                {
+                    Id = a.Id,
+                    FileName = a.FileName,
+                    ContentType = a.ContentType,
+                    SizeBytes = a.SizeBytes,
+                    Url = a.Url
+                })
+                .ToList()
         });
     }
 }

@@ -7,7 +7,7 @@ using ProjectManager.Domain.Entities;
 
 namespace ProjectManager.Application.Services;
 
-public class AccountService(IAppDbContext context, ITokenService tokenService) : IAccountService
+public class AccountService(IAppDbContext context, ITokenService tokenService, AdminOptions adminOptions) : IAccountService
 {
     public async Task<IReadOnlyList<AccountDto>> GetUsersAsync() =>
         await context.AppUsers.Select(u => ToAccountDto(u)).ToListAsync();
@@ -47,6 +47,11 @@ public class AccountService(IAppDbContext context, ITokenService tokenService) :
         };
 
         context.AppUsers.Add(user);
+        if (adminOptions.Matches(user.Email))
+        {
+            // Same save as the user, so the configured admin never exists without the role.
+            context.UserRoles.Add(new UserRole { User = user, RoleId = await context.AdminRoleIdAsync() });
+        }
         await context.SaveChangesAsync();
 
         return ServiceResult<UserDto>.Ok(ToUserDto(user));
@@ -60,7 +65,7 @@ public class AccountService(IAppDbContext context, ITokenService tokenService) :
             return ServiceResult<AccountDto>.Unauthorized();
         }
 
-        return ServiceResult<AccountDto>.Ok(ToAccountDto(user));
+        return ServiceResult<AccountDto>.Ok(await ToOwnAccountDto(user));
     }
 
     public async Task<ServiceResult<AccountDto>> UpdateMeAsync(int userId, UpdateAccountDto updateDto)
@@ -75,7 +80,7 @@ public class AccountService(IAppDbContext context, ITokenService tokenService) :
         user.LastName = updateDto.LastName.Trim();
         await context.SaveChangesAsync();
 
-        return ServiceResult<AccountDto>.Ok(ToAccountDto(user));
+        return ServiceResult<AccountDto>.Ok(await ToOwnAccountDto(user));
     }
 
     public async Task<ServiceResult> ChangePasswordAsync(int userId, ChangePasswordDto passwordDto)
@@ -120,6 +125,14 @@ public class AccountService(IAppDbContext context, ITokenService tokenService) :
         LastName = user.LastName,
         Token = tokenService.GenerateToken(user)
     };
+
+    // Read from the database on every call, so a revoked Admin role shows at once, whatever the token says.
+    private async Task<AccountDto> ToOwnAccountDto(AppUser user)
+    {
+        var dto = ToAccountDto(user);
+        dto.IsAdmin = await context.IsAdminAsync(user.Id);
+        return dto;
+    }
 
     private static AccountDto ToAccountDto(AppUser user) => new()
     {

@@ -5,6 +5,8 @@ export interface Account {
   lastName: string;
   email: string;
   createdAt: string;
+  /** Whether the user holds the global Admin role, as stored on the server at the time of the request. */
+  isAdmin?: boolean;
 }
 
 export interface Register {

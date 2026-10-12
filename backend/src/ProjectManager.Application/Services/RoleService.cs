@@ -11,8 +11,13 @@ public class RoleService(IAppDbContext context) : IRoleService
     public async Task<IReadOnlyList<RoleDto>> GetAllAsync() =>
         await context.Roles.OrderBy(r => r.Id).Select(r => new RoleDto { Id = r.Id, Name = r.Name }).ToListAsync();
 
-    public async Task<ServiceResult<IReadOnlyList<RoleDto>>> GetUserRolesAsync(int userId)
+    public async Task<ServiceResult<IReadOnlyList<RoleDto>>> GetUserRolesAsync(int callerId, int userId)
     {
+        if (!await context.IsAdminAsync(callerId))
+        {
+            return ServiceResult<IReadOnlyList<RoleDto>>.Forbidden();
+        }
+
         if (!await context.AppUsers.AnyAsync(u => u.Id == userId))
         {
             return ServiceResult<IReadOnlyList<RoleDto>>.NotFound("User not found.");
@@ -26,8 +31,13 @@ public class RoleService(IAppDbContext context) : IRoleService
         return ServiceResult<IReadOnlyList<RoleDto>>.Ok(roles);
     }
 
-    public async Task<ServiceResult<RoleDto>> AssignToUserAsync(int userId, int roleId)
+    public async Task<ServiceResult<RoleDto>> AssignToUserAsync(int callerId, int userId, int roleId)
     {
+        if (!await context.IsAdminAsync(callerId))
+        {
+            return ServiceResult<RoleDto>.Forbidden();
+        }
+
         if (!await context.AppUsers.AnyAsync(u => u.Id == userId))
         {
             return ServiceResult<RoleDto>.NotFound("User not found.");
@@ -58,12 +68,23 @@ public class RoleService(IAppDbContext context) : IRoleService
         return ServiceResult<RoleDto>.Ok(new RoleDto { Id = role.Id, Name = role.Name });
     }
 
-    public async Task<ServiceResult> RemoveFromUserAsync(int userId, int roleId)
+    public async Task<ServiceResult> RemoveFromUserAsync(int callerId, int userId, int roleId)
     {
+        if (!await context.IsAdminAsync(callerId))
+        {
+            return ServiceResult.Forbidden();
+        }
+
         var assignment = await context.UserRoles.FindAsync(userId, roleId);
         if (assignment == null)
         {
             return ServiceResult.NotFound("User does not hold this role.");
+        }
+
+        if (roleId == await context.AdminRoleIdAsync() &&
+            !await context.UserRoles.AnyAsync(ur => ur.RoleId == roleId && ur.UserId != userId))
+        {
+            return ServiceResult.Invalid("At least one admin must remain.");
         }
 
         context.UserRoles.Remove(assignment);

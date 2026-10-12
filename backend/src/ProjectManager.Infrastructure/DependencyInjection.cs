@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,6 +16,17 @@ public static class DependencyInjection
         services.AddDbContext<AppDb>(options => options.UseNpgsql(configuration["ConnectionString"]));
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDb>());
         services.AddScoped<ITokenService, TokenService>();
+        services.AddDataProtection().SetApplicationName("pjm").PersistKeysToDbContext<AppDb>();
+        services.AddSingleton<ISecretProtector, DataProtectionSecretProtector>();
+        services.AddSingleton<IMailboxClient, MailKitMailboxClient>();
+        services.AddHostedService<MailPollingWorker>();
+        var cloudinary = configuration.GetSection(CloudinaryOptions.Section);
+        services.AddSingleton<IFileStorage>(new CloudinaryFileStorage(new CloudinaryOptions
+        {
+            CloudName = cloudinary["CloudName"],
+            ApiKey = cloudinary["ApiKey"],
+            ApiSecret = cloudinary["ApiSecret"]
+        }));
         return services;
     }
 

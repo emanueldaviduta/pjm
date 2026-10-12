@@ -98,6 +98,22 @@
         <h3 id="task-description-title" class="section-title">Description</h3>
         <p class="muted description">{{ t.description || 'No description yet.' }}</p>
     </section>
+    @if (t.attachments?.length) {
+        <section class="aside-section" aria-labelledby="task-attachments-title" data-test="attachments">
+            <h3 id="task-attachments-title" class="section-title">Attachments</h3>
+            <ul class="attachments">
+                @for (file of t.attachments; track file.id) {
+                    <li>
+                        <a [href]="file.url" target="_blank" rel="noopener" [attr.aria-label]="'Open ' + file.fileName + ' in a new tab'">
+                            <i class="pi pi-paperclip" aria-hidden="true"></i>
+                            <span class="attachment-name">{{ file.fileName }}</span>
+                        </a>
+                        <span class="muted attachment-size">{{ fileSize(file.sizeBytes) }}</span>
+                    </li>
+                }
+            </ul>
+        </section>
+    }
     <button pButton type="button" variant="outlined" (click)="startEdit()">
         <i class="pi pi-pencil" pButtonIcon></i>
         <span pButtonLabel>Edit task</span>

@@ -1,0 +1,128 @@
+<p-toast></p-toast>
+
+<div class="page">
+    <header class="page-header">
+        <div>
+            <h1 class="page-title">Email → Project</h1>
+            <p class="page-subtitle">Emails from allowed senders to this mailbox become tasks on the chosen project.</p>
+        </div>
+    </header>
+
+    @if (loading()) {
+        <p class="muted" role="status">Loading mail settings…</p>
+    } @else {
+        @if (status(); as s) {
+            @if (!s.attachmentStorageConfigured) {
+                <p-message severity="warn" styleClass="notice" data-test="storage-notice">
+                    File storage is not configured, so attachments will not be stored. Tasks are still created, and their
+                    description lists the files that were not attached.
+                </p-message>
+            }
+
+            <section class="status" aria-labelledby="poll-status-title" data-test="poll-status">
+                <h2 id="poll-status-title" class="section-title">Last poll</h2>
+                @if (s.lastPollAt) {
+                    <p>
+                        {{ s.lastPollAt | date: 'medium' }} —
+                        @if (s.lastPollError) {
+                            <span class="poll-error" role="alert">{{ s.lastPollError }}</span>
+                        } @else {
+                            {{ s.lastPollCreated ?? 0 }} task(s) created
+                        }
+                    </p>
+                } @else {
+                    <p class="muted">The mailbox has not been checked yet.</p>
+                }
+            </section>
+        }
+
+        <form class="mail-form" (ngSubmit)="save()">
+            <div class="field toggle">
+                <p-toggleswitch inputId="mail-enabled" name="enabled" [ngModel]="form().enabled" (ngModelChange)="set('enabled', $event)" />
+                <label for="mail-enabled">Create tasks from incoming email</label>
+            </div>
+            <p class="muted hint">Only mail that arrives after the service is enabled is imported; messages already in the folder are left alone.</p>
+
+            <div class="grid">
+                <div class="field">
+                    <label for="mail-host">IMAP host</label>
+                    <input pInputText id="mail-host" name="host" placeholder="imap.example.com" [ngModel]="form().host" (ngModelChange)="set('host', $event)" />
+                </div>
+                <div class="field">
+                    <label for="mail-port">Port</label>
+                    <p-inputnumber inputId="mail-port" name="port" [useGrouping]="false" [min]="1" [max]="65535" [ngModel]="form().port" (ngModelChange)="set('port', $event)" />
+                </div>
+                <div class="field">
+                    <label for="mail-security">Security</label>
+                    <p-select inputId="mail-security" name="security" [options]="securityOptions" optionLabel="label" optionValue="value"
+                        [ngModel]="form().security" (ngModelChange)="set('security', $event)" appendTo="body" />
+                </div>
+                <div class="field">
+                    <label for="mail-username">Username</label>
+                    <input pInputText id="mail-username" name="username" autocomplete="off" [ngModel]="form().username" (ngModelChange)="set('username', $event)" />
+                </div>
+                <div class="field">
+                    <label for="mail-password">Password</label>
+                    <input pInputText id="mail-password" name="password" type="password" autocomplete="new-password"
+                        [placeholder]="status()?.hasPassword ? 'Password set — leave empty to keep it' : 'App password'"
+                        [ngModel]="form().password" (ngModelChange)="set('password', $event)" />
+                    @if (status()?.hasPassword) {
+                        <small class="muted" data-test="password-set">A password is stored.</small>
+                    }
+                </div>
+                <div class="field">
+                    <label for="mail-folder">Folder</label>
+                    <input pInputText id="mail-folder" name="folder" placeholder="INBOX" [ngModel]="form().folder" (ngModelChange)="set('folder', $event)" />
+                </div>
+                <div class="field">
+                    <label for="mail-project">Target project</label>
+                    <p-select inputId="mail-project" name="projectId" [options]="projects()" optionLabel="name" optionValue="id"
+                        placeholder="Choose a project" [showClear]="true" [ngModel]="form().projectId" (ngModelChange)="set('projectId', $event)" appendTo="body" />
+                </div>
+                <div class="field">
+                    <label for="mail-interval">Check every (seconds)</label>
+                    <p-inputnumber inputId="mail-interval" name="pollIntervalSeconds" [useGrouping]="false" [min]="30" [max]="3600"
+                        [ngModel]="form().pollIntervalSeconds" (ngModelChange)="set('pollIntervalSeconds', $event)" />
+                </div>
+            </div>
+
+            <fieldset class="senders">
+                <legend>Allowed senders</legend>
+                <div class="sender-input">
+                    <input pInputText id="mail-sender" name="newSender" placeholder="alerts@example.com" aria-label="Allowed sender address"
+                        [attr.aria-invalid]="senderInvalid()" [ngModel]="newSender()" (ngModelChange)="newSender.set($event)"
+                        (keydown.enter)="$event.preventDefault(); addSender()" />
+                    <button pButton type="button" severity="secondary" variant="outlined" [disabled]="!newSender().trim() || senderInvalid()" (click)="addSender()">
+                        <span pButtonLabel>Add</span>
+                    </button>
+                </div>
+                @if (senderInvalid()) {
+                    <small class="field-error" role="alert">Enter a valid email address.</small>
+                }
+                <ul class="sender-list" aria-label="Allowed senders">
+                    @for (sender of form().allowedSenders; track sender) {
+                        <li><p-chip [label]="sender" [removable]="true" (onRemove)="removeSender(sender)" /></li>
+                    } @empty {
+                        <li class="muted">No senders yet. Emails from other addresses are ignored.</li>
+                    }
+                </ul>
+            </fieldset>
+
+            @if (error()) {
+                <p-message severity="error" styleClass="notice" data-test="save-error">{{ error() }}</p-message>
+            }
+            @if (testResult(); as result) {
+                <p-message [severity]="result.success ? 'success' : 'error'" styleClass="notice" data-test="test-result">{{ result.message }}</p-message>
+            }
+
+            <div class="actions">
+                <button pButton type="button" severity="secondary" variant="outlined" [disabled]="testing()" (click)="test()">
+                    <span pButtonLabel>{{ testing() ? 'Testing…' : 'Test connection' }}</span>
+                </button>
+                <button pButton type="submit" [disabled]="saving()">
+                    <span pButtonLabel>{{ saving() ? 'Saving…' : 'Save' }}</span>
+                </button>
+            </div>
+        </form>
+    }
+</div>

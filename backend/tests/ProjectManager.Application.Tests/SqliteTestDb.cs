@@ -13,6 +13,7 @@ public abstract class SqliteTestDb : IDisposable
 {
     protected const int OwnerRoleId = 1;
     protected const int MemberRoleId = 2;
+    protected const int AdminRoleId = 3;
 
     private readonly SqliteConnection _connection;
     protected readonly AppDb Db;
@@ -45,6 +46,15 @@ public abstract class SqliteTestDb : IDisposable
         Db.AppUsers.Add(user);
         await Db.SaveChangesAsync();
         return user.Id;
+    }
+
+    /// <summary>Adds a user who holds the global Admin role.</summary>
+    protected async Task<int> AddAdmin(string firstName)
+    {
+        var id = await AddUser(firstName);
+        Db.UserRoles.Add(new UserRole { UserId = id, RoleId = AdminRoleId });
+        await Db.SaveChangesAsync();
+        return id;
     }
 
     /// <summary>Adds a project and gives each listed user the listed role in it.</summary>

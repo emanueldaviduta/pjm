@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using ProjectManager.Api.Extensions;
 using ProjectManager.Application.DTOs;
 using ProjectManager.Application.Interfaces;
@@ -26,13 +27,19 @@ public static class RoleEndpoints
     private static async Task<IResult> GetRoles(IRoleService roles) =>
         TypedResults.Ok(await roles.GetAllAsync());
 
-    private static async Task<IResult> GetUserRoles(int userId, IRoleService roles) =>
-        (await roles.GetUserRolesAsync(userId)).ToHttpResult();
+    private static async Task<IResult> GetUserRoles(int userId, ClaimsPrincipal principal, IRoleService roles) =>
+        principal.GetUserId() is { } callerId
+            ? (await roles.GetUserRolesAsync(callerId, userId)).ToHttpResult()
+            : TypedResults.Unauthorized();
 
-    private static async Task<IResult> AssignRole(int userId, AssignRoleRequest request, IRoleService roles) =>
-        (await roles.AssignToUserAsync(userId, request.RoleId))
-            .ToCreatedHttpResult($"/api/account/users/{userId}/roles");
+    private static async Task<IResult> AssignRole(int userId, AssignRoleRequest request, ClaimsPrincipal principal, IRoleService roles) =>
+        principal.GetUserId() is { } callerId
+            ? (await roles.AssignToUserAsync(callerId, userId, request.RoleId))
+                .ToCreatedHttpResult($"/api/account/users/{userId}/roles")
+            : TypedResults.Unauthorized();
 
-    private static async Task<IResult> RemoveRole(int userId, int roleId, IRoleService roles) =>
-        (await roles.RemoveFromUserAsync(userId, roleId)).ToHttpResult();
+    private static async Task<IResult> RemoveRole(int userId, int roleId, ClaimsPrincipal principal, IRoleService roles) =>
+        principal.GetUserId() is { } callerId
+            ? (await roles.RemoveFromUserAsync(callerId, userId, roleId)).ToHttpResult()
+            : TypedResults.Unauthorized();
 }

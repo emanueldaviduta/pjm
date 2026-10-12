@@ -29,7 +29,7 @@ export class Header {
     this.account.isSignedIn()
       ? [
           { label: 'Account', icon: 'pi pi-user', routerLink: '/account' },
-          { label: 'Users', icon: 'pi pi-users', routerLink: '/users' },
+          ...(this.account.isAdmin() ? [{ label: 'Settings', icon: 'pi pi-cog', routerLink: '/settings' }] : []),
           { separator: true },
           { label: 'Sign out', icon: 'pi pi-sign-out', command: () => this.signOut() },
         ]

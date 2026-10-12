@@ -16,6 +16,17 @@ public class TaskItemDto
     public DateTime? DueDate { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public List<TaskAttachmentDto> Attachments { get; set; } = [];
+}
+
+/// <summary>A file attached to a task; <see cref="Url"/> is a public, permanent download link.</summary>
+public class TaskAttachmentDto
+{
+    public int Id { get; set; }
+    public required string FileName { get; set; }
+    public required string ContentType { get; set; }
+    public long SizeBytes { get; set; }
+    public required string Url { get; set; }
 }
 
 /// <summary>Body of create/update. Only ids are accepted, never nested Project/Assigned objects.</summary>

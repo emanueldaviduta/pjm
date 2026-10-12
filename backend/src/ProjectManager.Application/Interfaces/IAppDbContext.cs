@@ -11,6 +11,9 @@ public interface IAppDbContext
     DbSet<Role> Roles { get; }
     DbSet<UserRole> UserRoles { get; }
     DbSet<ProjectUserRole> ProjectUserRoles { get; }
+    DbSet<MailSettings> MailSettings { get; }
+    DbSet<InboundEmail> InboundEmails { get; }
+    DbSet<TaskAttachment> TaskAttachments { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

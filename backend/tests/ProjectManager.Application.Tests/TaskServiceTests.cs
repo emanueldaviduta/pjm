@@ -102,4 +102,45 @@ public class TaskServiceTests : SqliteTestDb
         Assert.Equal("edited", updated!.Title);
         Assert.NotNull(await _service.GetByIdAsync(ana, created.Id));
     }
+
+    [Fact]
+    public async Task Attachments_AreReturnedToMembers_AndEmptyWhenThereAreNone()
+    {
+        var ana = await AddUser("Ana");
+        var project = await AddProject("P", (ana, MemberRoleId));
+        var withFile = await _service.CreateAsync(ana, NewTask(project, "with file"));
+        var plain = await _service.CreateAsync(ana, NewTask(project, "plain"));
+        Db.TaskAttachments.Add(new TaskAttachment
+        {
+            TaskItemId = withFile!.Id, FileName = "report.pdf", ContentType = "application/pdf",
+            SizeBytes = 120, Url = "https://files.test/report.pdf", PublicId = "pjm/tasks/report"
+        });
+        await Db.SaveChangesAsync();
+
+        var read = await _service.GetByIdAsync(ana, withFile.Id);
+
+        var attachment = Assert.Single(read!.Attachments);
+        Assert.Equal(("report.pdf", "application/pdf", 120L, "https://files.test/report.pdf"),
+            (attachment.FileName, attachment.ContentType, attachment.SizeBytes, attachment.Url));
+        Assert.Empty((await _service.GetByIdAsync(ana, plain!.Id))!.Attachments);
+        Assert.Single((await _service.GetAllAsync(ana)).Single(t => t.Id == withFile.Id).Attachments);
+    }
+
+    [Fact]
+    public async Task Attachments_AreNotReturnedToNonMembers()
+    {
+        var ana = await AddUser("Ana");
+        var bob = await AddUser("Bob");
+        var project = await AddProject("P", (ana, OwnerRoleId));
+        var task = await _service.CreateAsync(ana, NewTask(project));
+        Db.TaskAttachments.Add(new TaskAttachment
+        {
+            TaskItemId = task!.Id, FileName = "secret.pdf", ContentType = "application/pdf",
+            SizeBytes = 1, Url = "https://files.test/secret.pdf", PublicId = "pjm/tasks/secret"
+        });
+        await Db.SaveChangesAsync();
+
+        Assert.Null(await _service.GetByIdAsync(bob, task.Id));
+        Assert.Empty(await _service.GetAllAsync(bob));
+    }
 }

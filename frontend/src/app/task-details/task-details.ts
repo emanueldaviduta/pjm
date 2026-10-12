@@ -8,8 +8,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
 import {
-  BOARD_STATUSES, PRIORITY_LABELS, STATUS_LABELS, TaskItem, TaskPriority, TaskStatus, toDateOnly,
-} from '../_models/task-item';
+  BOARD_STATUSES, formatFileSize, PRIORITY_LABELS, STATUS_LABELS, TaskItem, TaskPriority, TaskStatus, toDateOnly } from '../_models/task-item';
 import { memberName } from '../_models/project-member';
 import { ProjectMemberService } from '../_services/project-member.service';
 import { TaskService } from '../_services/task.service';
@@ -29,6 +28,7 @@ export class TaskDetails {
   private memberService = inject(ProjectMemberService);
 
   readonly task = input.required<TaskItem>();
+  protected readonly fileSize = formatFileSize;
   /** Project key used to label the task, e.g. "WEB" for WEB-12. */
   readonly projectKey = input.required<string>();
   readonly closed = output<void>();

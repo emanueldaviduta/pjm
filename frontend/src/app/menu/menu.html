@@ -12,6 +12,23 @@
         }
     </ul>
 
+    @if (account.isAdmin()) {
+        <section aria-labelledby="settings-title" data-test="settings-menu">
+            <h2 id="settings-title" class="eyebrow"><i class="pi pi-cog" aria-hidden="true"></i> Settings</h2>
+            <ul class="nav-list">
+                @for (link of settingsLinks; track link.routerLink) {
+                    <li>
+                        <a class="nav-link" [routerLink]="link.routerLink" routerLinkActive="active"
+                            ariaCurrentWhenActive="page" (click)="layout.closeMenu()">
+                            <i [class]="link.icon" aria-hidden="true"></i>
+                            {{ link.label }}
+                        </a>
+                    </li>
+                }
+            </ul>
+        </section>
+    }
+
     @if (recentProjects().length) {
         <section aria-labelledby="recent-projects-title">
             <h2 id="recent-projects-title" class="eyebrow">Recent projects</h2>

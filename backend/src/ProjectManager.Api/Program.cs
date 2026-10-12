@@ -1,6 +1,7 @@
 using ProjectManager.Api.Endpoints;
 using ProjectManager.Api.Extensions;
 using ProjectManager.Application;
+using ProjectManager.Application.Common;
 using ProjectManager.Infrastructure;
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,7 @@ if(builder.Environment.IsDevelopment())
     builder.Configuration.AddUserSecrets<Program>();
 
 builder.Services.AddApplication();
+builder.Services.AddSingleton(new AdminOptions { Email = builder.Configuration["AdminEmail"] });
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddIdentityServices(builder.Configuration);
 builder.Services.AddAuthorization();
@@ -34,6 +36,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.Services.ApplyMigrations();
+await app.Services.EnsureConfiguredAdminAsync();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -45,5 +48,6 @@ app.MapProjectEndpoints();
 app.MapTaskItemEndpoints();
 app.MapRoleEndpoints();
 app.MapProjectMembershipEndpoints();
+app.MapSettingsEndpoints();
 
 app.Run();

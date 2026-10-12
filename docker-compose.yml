@@ -24,6 +24,12 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionString: Host=db;Port=5432;Database=${POSTGRES_DB:-pjm};Username=${POSTGRES_USER:-pjm};Password=${POSTGRES_PASSWORD};Gss Encryption Mode=Disable
       TokenKey: ${TOKEN_KEY:?set TOKEN_KEY in .env}
+      # The user with this email becomes Admin (at startup, or when they register).
+      AdminEmail: ${ADMIN_EMAIL:-}
+      # Attachment storage; leave empty to create email tasks without attachments.
+      CloudinarySettings__CloudName: ${CLOUDINARY_CLOUD_NAME:-}
+      CloudinarySettings__ApiKey: ${CLOUDINARY_API_KEY:-}
+      CloudinarySettings__ApiSecret: ${CLOUDINARY_API_SECRET:-}
     depends_on:
       db:
         condition: service_healthy

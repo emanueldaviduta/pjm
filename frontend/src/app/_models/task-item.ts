@@ -25,9 +25,27 @@ export interface TaskItem {
   dueDate?: string | null;
   createdAt?: string;
   updatedAt?: string;
+  /** Files attached to the task (from email); filled in by the API. */
+  attachments?: TaskAttachment[];
 }
 
-export type NewTaskItem = Omit<TaskItem, 'id' | 'assigned' | 'createdAt' | 'updatedAt'>;
+/** A file attached to a task. `url` is a public, permanent download link. */
+export interface TaskAttachment {
+  id: number;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+  url: string;
+}
+
+export type NewTaskItem = Omit<TaskItem, 'id' | 'assigned' | 'createdAt' | 'updatedAt' | 'attachments'>;
+
+/** "512 B", "120 KB", "3.4 MB". */
+export function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 export const STATUS_LABELS: Record<TaskStatus, string> = {
   [TaskStatus.Created]: 'To do',

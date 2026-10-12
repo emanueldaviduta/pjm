@@ -168,6 +168,17 @@ describe('ProjectMembers', () => {
     });
   });
 
+  describe('project roles', () => {
+    it('never offers the global Admin role', () => {
+      membersReq().flush([ana()]);
+      rolesReq().flush([...ROLES, { id: 3, name: 'Admin' }]);
+      fixture.detectChanges();
+      const internals = ui as unknown as { roleOptions(): { name: string }[]; availableRoles(m: unknown): { name: string }[] };
+      expect(internals.roleOptions().map(r => r.name)).toEqual(['Owner', 'Member']);
+      expect(internals.availableRoles(ana()).map(r => r.name)).toEqual(['Owner']);
+    });
+  });
+
   describe('owner-only controls', () => {
     const controls = () => ({
         add: [...fixture.nativeElement.querySelectorAll('button')].some((b: HTMLElement) => b.textContent?.includes('Add member')),

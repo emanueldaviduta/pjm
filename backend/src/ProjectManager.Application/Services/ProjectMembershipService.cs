@@ -31,9 +31,15 @@ public class ProjectMembershipService(IAppDbContext context) : IProjectMembershi
             return ServiceResult<MemberDto>.NotFound("User not found.");
         }
 
-        if (!await context.Roles.AnyAsync(r => r.Id == roleId))
+        var roleName = await context.Roles.Where(r => r.Id == roleId).Select(r => r.Name).FirstOrDefaultAsync();
+        if (roleName == null)
         {
             return ServiceResult<MemberDto>.NotFound("Role not found.");
+        }
+
+        if (roleName == RoleNames.Admin)
+        {
+            return ServiceResult<MemberDto>.Invalid("Admin is not a project role.");
         }
 
         if (await context.ProjectUserRoles.AnyAsync(p => p.ProjectId == projectId && p.UserId == userId && p.RoleId == roleId))

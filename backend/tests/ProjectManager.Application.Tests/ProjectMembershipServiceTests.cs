@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using ProjectManager.Application.Common;
 using ProjectManager.Application.Services;
 
@@ -81,6 +82,31 @@ public class ProjectMembershipServiceTests : SqliteTestDb
         Assert.Equal(ServiceStatus.NotFound, (await _service.AddRoleAsync(ana, project, 999, MemberRoleId)).Status);
         Assert.Equal(ServiceStatus.NotFound, (await _service.AddRoleAsync(ana, project, bob, 999)).Status);
         Assert.Empty(await RoleIds(project, bob));
+    }
+
+    [Fact]
+    public async Task Add_AdminRole_IsInvalid_AndRecordsNothing()
+    {
+        var ana = await AddUser("Ana");
+        var bob = await AddUser("Bob");
+        var project = await AddProject("P", (ana, OwnerRoleId));
+
+        var result = await _service.AddRoleAsync(ana, project, bob, AdminRoleId);
+
+        Assert.Equal(ServiceStatus.Invalid, result.Status);
+        Assert.Equal("Admin is not a project role.", result.Message);
+        Assert.Empty(await RoleIds(project, bob));
+    }
+
+    [Fact]
+    public async Task GlobalAdmin_IsNotAProjectMember()
+    {
+        var ana = await AddUser("Ana");
+        var admin = await AddAdmin("Root");
+        var project = await AddProject("P", (ana, OwnerRoleId));
+
+        Assert.Empty(await Db.VisibleProjects(admin).ToListAsync());
+        Assert.Equal(ServiceStatus.NotFound, (await _service.GetMembersAsync(admin, project)).Status);
     }
 
     // --- List ----------------------------------------------------------------------------------

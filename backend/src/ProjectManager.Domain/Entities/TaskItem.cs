@@ -15,6 +15,7 @@ public class TaskItem
     public DateTime? DueDate { get; set; } = DateTime.UtcNow.AddDays(7);
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public List<TaskAttachment> Attachments { get; set; } = [];
 }
 
 public enum Status

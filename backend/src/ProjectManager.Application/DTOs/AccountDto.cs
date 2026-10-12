@@ -9,6 +9,8 @@ public class AccountDto
     public required string LastName { get; set; }
     public required string Email { get; set; }
     public DateTime CreatedAt { get; set; }
+    /// <summary>Whether the user holds the global Admin role; filled in for the signed-in user's own account.</summary>
+    public bool IsAdmin { get; set; }
 }
 
 public class UpdateAccountDto

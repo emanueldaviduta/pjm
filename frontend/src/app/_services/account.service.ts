@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Injectable, inject, signal } from '@angular/core';
-import { tap } from 'rxjs';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { Observable, catchError, map, of, shareReplay, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { Account, ChangePassword, Register } from '../_models/account';
 import { AuthLogin, Login } from '../_models/login';
@@ -18,6 +18,15 @@ export class AccountService {
 
   readonly isSignedIn = signal(!!sessionStorage.getItem(TOKEN_KEY));
 
+  /** The signed-in user's account; loaded after sign-in and at start when a token exists, cleared on logout. */
+  readonly me = signal<Account | null>(null);
+  readonly isAdmin = computed(() => !!this.me()?.isAdmin);
+  private meRequest: Observable<Account | null> | null = null;
+
+  constructor() {
+    if (this.isSignedIn()) this.loadMe().subscribe();
+  }
+
   login(credentials: Login) {
     return this.api.post<AuthLogin>(this.baseUrl + '/login', credentials).pipe(
       tap(response => this.startSession(response.token)),
@@ -33,6 +42,30 @@ export class AccountService {
   logout() {
     sessionStorage.removeItem(TOKEN_KEY);
     this.isSignedIn.set(false);
+    this.me.set(null);
+    this.meRequest = null;
+  }
+
+  /** Drops the cached account and fetches it again, e.g. after the user's own roles changed. */
+  refreshMe() {
+    this.me.set(null);
+    this.meRequest = null;
+    this.loadMe().subscribe();
+  }
+
+  /** The current account, fetched once per session; null when it cannot be loaded. */
+  loadMe(): Observable<Account | null> {
+    if (this.me()) return of(this.me());
+    this.meRequest ??= this.getMe().pipe(
+      tap(me => this.me.set(me)),
+      map(me => me as Account | null),
+      catchError(() => {
+        this.meRequest = null;
+        return of(null);
+      }),
+      shareReplay(1),
+    );
+    return this.meRequest;
   }
 
   getMe() {
@@ -50,6 +83,7 @@ export class AccountService {
   private startSession(token: string) {
     sessionStorage.setItem(TOKEN_KEY, token);
     this.isSignedIn.set(true);
+    this.refreshMe();
     // Data loaded while signed out came back 401; fetch it again with the new token.
     this.projectService.load(true);
     this.taskService.load(true);

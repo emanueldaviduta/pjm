@@ -7,6 +7,7 @@ namespace ProjectManager.Application.Common;
 public static class RoleNames
 {
     public const string Owner = "Owner";
+    public const string Admin = "Admin";
 }
 
 /// <summary>Who may see and act on a project, based on the roles the caller holds in it.</summary>

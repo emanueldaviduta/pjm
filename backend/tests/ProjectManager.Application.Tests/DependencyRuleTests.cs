@@ -37,7 +37,7 @@ public class DependencyRuleTests
     }
 
     [Fact]
-    public void Application_ReferencesOnlyDomain_AndNoProviderJwtOrHostingPackage()
+    public void Application_ReferencesOnlyDomain_AndNoProviderJwtHostingMailOrStoragePackage()
     {
         Assert.Equal(["ProjectManager.Domain"], ProjectReferences("Application"));
 
@@ -45,7 +45,9 @@ public class DependencyRuleTests
         [
             "Npgsql", "Microsoft.EntityFrameworkCore.Sqlite", "Microsoft.EntityFrameworkCore.SqlServer",
             "Microsoft.EntityFrameworkCore.Design", "System.IdentityModel.Tokens.Jwt", "Microsoft.IdentityModel",
-            "Microsoft.AspNetCore", "Microsoft.Extensions.Hosting"
+            "Microsoft.AspNetCore", "Microsoft.Extensions.Hosting",
+            // Mail, file storage and secret protection are reached only through Application interfaces.
+            "MailKit", "MimeKit", "CloudinaryDotNet", "Microsoft.AspNetCore.DataProtection"
         ];
         var offending = PackageReferences("Application")
             .Where(p => forbidden.Any(f => p.StartsWith(f, StringComparison.OrdinalIgnoreCase))).ToArray();

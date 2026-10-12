@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using ProjectManager.Application.Common;
 using ProjectManager.Application.DTOs;
 using ProjectManager.Application.Services;
+using ProjectManager.Domain.Entities;
 using ProjectManager.Infrastructure.Persistence;
 using ProjectManager.Infrastructure.Services;
 
@@ -31,7 +32,7 @@ public class AccountServiceTests : IDisposable
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?> { ["TokenKey"] = TestData.TokenKey })
             .Build();
-        _service = new AccountService(_db, new TokenService(config));
+        _service = new AccountService(_db, new TokenService(config), new AdminOptions());
     }
 
     public void Dispose()
@@ -105,6 +106,23 @@ public class AccountServiceTests : IDisposable
         Assert.Equal("Ana2", updated.Value!.FirstName);
         Assert.Equal("Pop2", updated.Value.LastName);
         Assert.Equal(ServiceStatus.Unauthorized, missing.Status);
+    }
+
+    [Fact]
+    public async Task GetMe_ReflectsTheAdminRoleAtRequestTime()
+    {
+        await RegisterAna();
+        var id = (await _db.AppUsers.SingleAsync()).Id;
+        var adminRole = new UserRole { UserId = id, RoleId = 3 };
+        _db.UserRoles.Add(adminRole);
+        await _db.SaveChangesAsync();
+
+        Assert.True((await _service.GetMeAsync(id)).Value!.IsAdmin);
+
+        // Revoked after sign-in: the same user (same token) is no longer reported as admin.
+        _db.UserRoles.Remove(adminRole);
+        await _db.SaveChangesAsync();
+        Assert.False((await _service.GetMeAsync(id)).Value!.IsAdmin);
     }
 
     [Fact]
