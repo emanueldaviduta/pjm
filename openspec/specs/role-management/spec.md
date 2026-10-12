@@ -7,15 +7,15 @@ Defines the catalog of roles the system knows about and how a user is given or s
 ## Requirements
 
 ### Requirement: Role catalog with default roles
-The system SHALL keep a catalog of roles, each identified by a unique name. The catalog SHALL contain the roles `Owner` and `Member` from the moment the feature is available, including on databases that already hold data.
+The system SHALL keep a catalog of roles, each identified by a unique name. The catalog SHALL contain the roles `Owner`, `Member` and `Admin` from the moment the feature is available, including on databases that already hold data. `Owner` and `Member` are project roles, and `Admin` is a global role.
 
 #### Scenario: Default roles exist on a new database
 - **WHEN** the system starts on an empty database
-- **THEN** the role catalog contains `Owner` and `Member`
+- **THEN** the role catalog contains `Owner`, `Member` and `Admin`
 
 #### Scenario: Default roles are added to an existing database
 - **WHEN** the system is upgraded on a database that already has users, projects and tasks
-- **THEN** the role catalog contains `Owner` and `Member` and the existing users, projects and tasks are unchanged
+- **THEN** the role catalog contains `Owner`, `Member` and `Admin`, and the existing users, projects, tasks and memberships are unchanged
 
 ### Requirement: List roles
 The system SHALL let an authenticated user retrieve every role in the catalog, each with its id and name.
@@ -29,10 +29,10 @@ The system SHALL let an authenticated user retrieve every role in the catalog, e
 - **THEN** the system rejects it as unauthorized and returns no roles
 
 ### Requirement: Assign multiple roles to a user
-The system SHALL allow an authenticated user to assign any number of catalog roles to a user, and a user SHALL be able to hold several roles at the same time. Assigning a role the user already holds MUST NOT create a duplicate.
+The system SHALL allow a user who holds `Admin` to assign any number of catalog roles to a user, and a user SHALL be able to hold several roles at the same time. Assigning a role the user already holds MUST NOT create a duplicate. A caller without `Admin` MUST be refused as forbidden and nothing changes.
 
 #### Scenario: Assign a second role
-- **WHEN** a user who already holds `Member` is assigned `Owner`
+- **WHEN** an admin assigns `Owner` to a user who already holds `Member`
 - **THEN** the user holds both `Member` and `Owner`
 
 #### Scenario: Assign a role twice
@@ -43,17 +43,25 @@ The system SHALL allow an authenticated user to assign any number of catalog rol
 - **WHEN** a role assignment names a user or a role that does not exist
 - **THEN** the system answers that the user or role was not found and changes nothing
 
+#### Scenario: Non-admin assigns a role
+- **WHEN** a user without `Admin` assigns any role to any user
+- **THEN** the system answers forbidden and changes nothing
+
 ### Requirement: List and remove a user's roles
-The system SHALL let an authenticated user list the roles held by a user and remove a single role from that user without affecting the user's other roles.
+The system SHALL let a user who holds `Admin` list the roles held by a user and remove a single role from that user without affecting the user's other roles. A caller without `Admin` MUST be refused as forbidden.
 
 #### Scenario: List a user's roles
-- **WHEN** an authenticated user requests the roles of a user who holds `Member` and `Owner`
+- **WHEN** an admin requests the roles of a user who holds `Member` and `Owner`
 - **THEN** the response lists exactly `Member` and `Owner`
 
 #### Scenario: Remove one role
-- **WHEN** the `Owner` role is removed from a user who holds `Member` and `Owner`
+- **WHEN** an admin removes the `Owner` role from a user who holds `Member` and `Owner`
 - **THEN** the user holds only `Member`
 
 #### Scenario: Remove a role the user does not hold
 - **WHEN** a role is removed from a user who does not hold it
 - **THEN** the system answers that the assignment was not found and changes nothing
+
+#### Scenario: Non-admin lists or removes roles
+- **WHEN** a user without `Admin` lists another user's roles or removes one of them
+- **THEN** the system answers forbidden and changes nothing
